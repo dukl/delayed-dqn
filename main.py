@@ -8,7 +8,7 @@ from stateModel import log
 from logger import log
 
 delta_t = -1 # time step
-NUM_UE_REQs = 200
+NUM_UE_REQs = 300
 
 state_on_road = []
 action_on_road = []
