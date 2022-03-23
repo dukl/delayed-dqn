@@ -1,3 +1,5 @@
+import random
+
 from logger import log
 
 class Agent:
@@ -13,7 +15,7 @@ class Agent:
                 log.logger.debug('[Agent][receives s['+ str(obs[i].id)+']] = '+''.join(str(obs[i].value)))
                 #self.history_rwds.append()
             self.history_obs.append(obs[0]) # store latest observation
-            return 1
+            return self.action_space[random.randint(1,3)-1]
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
             return None

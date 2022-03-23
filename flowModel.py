@@ -1,3 +1,4 @@
+import random
 from queue import Queue
 from logger import log
 import entities
@@ -7,11 +8,12 @@ import numpy as np
 
 class FM:
     def __init__(self, n_ue_reqs):
+        self.total_ue_reqs = n_ue_reqs
         self.n_ue_reqs = n_ue_reqs
         self.n_amf_insts = 1
         self.it_time = 0
         self.time_interval = 0.01
-        self.Delay_Up_Link = 0.5
+        self.Delay_Up_Link = 1.5
         self.Delay_Down_Link = 0.5
         self.Rate_SCTP_Out   = 100
         self.msgUpOnRoad = Queue(maxsize=0)
@@ -24,22 +26,37 @@ class FM:
         self.initialize()
         self.add_new_action = False
 
+    def update_ue_reqs_every_time_step(self, n_ue_reqs):
+        for i in range(n_ue_reqs):
+            message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
+            self.msgInRISE.put(message)
+        self.total_ue_reqs += n_ue_reqs
+
     def initialize(self):
         for i in range(self.numAMF):
-            self.amfList.append(AmfEntity(np.random.uniform(2,4,None), i))
+            self.amfList.append(AmfEntity(np.random.uniform(2,4,None), i, 0))
         for i in range(self.n_ue_reqs):
             message = Msgs(i+1, 1, 'RegistrationRequest')
             self.msgInRISE.put(message)
 
     def check_available_AMF_Inst(self):
-        index = self.AMFIndex
         min_n_msgs = 10000
-        for i in range(self.numAMF):
+        for i in range(len(self.amfList)):
             if self.amfList[i].close == True:
                 continue
             elif self.amfList[i].n_msgs < min_n_msgs:
                 min_n_msgs = self.amfList[i].n_msgs
                 self.AMFIndex = i
+
+    def check_close_which_AMF_Inst(self):
+        max_n_msgs = 10000
+        for i in range(len(self.amfList)):
+            if self.amfList[i].close == True:
+                continue
+            elif self.amfList[i].n_msgs > max_n_msgs:
+                max_n_msgs = self.amfList[i].n_msgs
+                self.AMFIndex = i
+        self.amfList[self.AMFIndex].close = True
 
     def step(self, action, id, tpS, tpE, delta_t):
         if action == None:
@@ -53,14 +70,18 @@ class FM:
                 log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
                 if action == 1:
                     self.numAMF += 1
-                    self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1))
+                    if self.numAMF > 200:
+                        self.numAMF = 200
+                        log.logger.debug('Maximum Number of AMF Instance is 5, ignore this action')
+                    else:
+                        self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
                 if action == -1:
                     self.numAMF -= 1
                     if self.numAMF <= 0:
+                        self.numAMF = 1
                         log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
                     else:
-                        self.amfList.sort(key=lambda AmfEntity: AmfEntity.message_queue.qsize(), reverse=False)
-                        self.amfList[0].close = True
+                        self.check_close_which_AMF_Inst()
             self.it_time += self.time_interval
             log.logger.debug('[FlowModel][At time point: %f]' % (self.it_time))
             log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (self.msgInRISE.qsize()))
@@ -79,20 +100,20 @@ class FM:
                     self.check_available_AMF_Inst()
                     log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))
                     self.amfList[self.AMFIndex].stateTrans(message.ue_id, message.msg_id, message.msgType, self.time_interval)
-                    for i in range(self.numAMF):
+                    for i in range(len(self.amfList)):
                         if i == self.AMFIndex:
                             continue
                         else:
                             self.amfList[i].stateTrans(0,0,'NULL',self.time_interval)
-                    self.AMFIndex = (self.AMFIndex + 1) % self.numAMF
+                    #self.AMFIndex = (self.AMFIndex + 1) % self.numAMF
                 else:
                     log.logger.debug('No message is put into AMFs')
-                    for i in range(self.numAMF):
+                    for i in range(len(self.amfList)):
                         self.amfList[i].stateTrans(0,0,'NULL', self.time_interval)
             else:
-                for i in range(self.numAMF):
+                for i in range(len(self.amfList)):
                     self.amfList[i].stateTrans(0, 0, 'NULL', self.time_interval)
-            for i in range(self.numAMF):
+            for i in range(len(self.amfList)):
                 if self.amfList[i].newMsg.msg_id > 0:
                     log.logger.debug('AMF (%d) generate new message (%d, %d, %s) into msgDnOnRoad (%d)' % (i, self.amfList[i].newMsg.ue_id, self.amfList[i].newMsg.msg_id, self.amfList[i].newMsg.msgType, self.msgDnOnRoad.qsize()))
                     message = Msgs(0,0,'NULL')
@@ -111,8 +132,10 @@ class FM:
                     self.msgInRISE.put(back_message)
                 else:
                     log.logger.debug('RISE dosennot genearte new message any more')
-            log.logger.debug('Statics (%d) AMFs ...' % (self.numAMF))
-            for i in range(self.numAMF):
+            log.logger.debug('Statics (%d) AMFs ...' % (len(self.amfList)))
+            for i in range(len(self.amfList)):
+                if self.amfList[i].close == True:
+                    log.logger.debug('AMF (%d) has been closed' % (i))
                 log.logger.debug('AMF (%d) has (%d) messages' % (i, self.amfList[i].n_msgs))
 
 

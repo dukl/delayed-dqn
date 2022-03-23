@@ -4,10 +4,11 @@ from logger import log
 
 
 
+
 class SM:
     def __init__(self, state, id):
         self.value = state
-        self.trans_delay = np.random.uniform(1,4,None)
+        self.trans_delay = np.random.uniform(1,3,None)
         self.current_status = self.trans_delay
         self.id = id
         self.time_step = 0

@@ -1,6 +1,6 @@
 import logging
 from logging import handlers
-
+import os
 
 
 class Logger(object):
@@ -31,8 +31,9 @@ class Logger(object):
         self.logger.addHandler(sh) #把对象加到logger里
         self.logger.addHandler(th)
 
-
-log = Logger('all.log',level='debug')
+logFile = 'all.log'
+os.remove(logFile)
+log = Logger(logFile, level='debug')
 
 #if __name__ == '__main__':
 #    log = Logger('all.log',level='debug')
