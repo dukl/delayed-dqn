@@ -4,9 +4,9 @@ from logger import log
 from flowModel import FM
 
 class ENV():
-    def __init__(self, n_ue_reqs):
+    def __init__(self):
         self.old_ob  = None
-        self.model = FM(n_ue_reqs)
+        self.model = FM(0)
     def reset(self):
         print('aaa')
     def step(self, action):

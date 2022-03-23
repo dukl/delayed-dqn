@@ -7,7 +7,7 @@ class AM:
         self.value = action
         self.id = id
         self.time_step = 0
-        self.current_status = np.random.uniform(1,3,None)
+        self.current_status = np.random.uniform(0,1,None)
         self.time_left_in_env = 0
     def check_status(self,delta_t):
         if self.id == delta_t:

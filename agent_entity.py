@@ -16,6 +16,7 @@ class Agent:
                 #self.history_rwds.append()
             self.history_obs.append(obs[0]) # store latest observation
             return self.action_space[random.randint(1,3)-1]
+            #return 1
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
             return None

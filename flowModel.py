@@ -13,9 +13,8 @@ class FM:
         self.n_amf_insts = 1
         self.it_time = 0
         self.time_interval = 0.01
-        self.Delay_Up_Link = 1.5
+        self.Delay_Up_Link = 0.5
         self.Delay_Down_Link = 0.5
-        self.Rate_SCTP_Out   = 100
         self.msgUpOnRoad = Queue(maxsize=0)
         self.msgDnOnRoad = Queue(maxsize=0)
         self.msgInRISE   = Queue(maxsize=0)
@@ -25,6 +24,7 @@ class FM:
         self.cpuInAMF = []
         self.initialize()
         self.add_new_action = False
+        self.MAX_AMF_INST = 10
 
     def update_ue_reqs_every_time_step(self, n_ue_reqs):
         for i in range(n_ue_reqs):
@@ -34,7 +34,7 @@ class FM:
 
     def initialize(self):
         for i in range(self.numAMF):
-            self.amfList.append(AmfEntity(np.random.uniform(2,4,None), i, 0))
+            self.amfList.append(AmfEntity(np.random.uniform(1,6,None), i, 0))
         for i in range(self.n_ue_reqs):
             message = Msgs(i+1, 1, 'RegistrationRequest')
             self.msgInRISE.put(message)
@@ -70,8 +70,8 @@ class FM:
                 log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
                 if action == 1:
                     self.numAMF += 1
-                    if self.numAMF > 200:
-                        self.numAMF = 200
+                    if self.numAMF > self.MAX_AMF_INST:
+                        self.numAMF = self.MAX_AMF_INST
                         log.logger.debug('Maximum Number of AMF Instance is 5, ignore this action')
                     else:
                         self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
