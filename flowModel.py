@@ -59,6 +59,7 @@ class FM:
         self.amfList[self.AMFIndex].close = True
 
     def step(self, action, id, tpS, tpE, delta_t):
+        reward = 0
         if action == None:
             log.logger.debug('[FlowModel][No action is executed]')
 
@@ -71,13 +72,14 @@ class FM:
                 if action == 1:
                     self.numAMF += 1
                     if self.numAMF > self.MAX_AMF_INST:
-                        self.numAMF = self.MAX_AMF_INST
-                        log.logger.debug('Maximum Number of AMF Instance is 5, ignore this action')
+                        log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
+                        reward -= 10
                     else:
                         self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
                 if action == -1:
                     self.numAMF -= 1
                     if self.numAMF <= 0:
+                        reward -= 100
                         self.numAMF = 1
                         log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
                     else:
@@ -137,7 +139,7 @@ class FM:
                 if self.amfList[i].close == True:
                     log.logger.debug('AMF (%d) has been closed' % (i))
                 log.logger.debug('AMF (%d) has (%d) messages' % (i, self.amfList[i].n_msgs))
-
+        return reward
 
 
 

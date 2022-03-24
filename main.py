@@ -15,7 +15,6 @@ MAX_TIME = 100
 
 state_on_road = []
 action_on_road = []
-reward_on_road = []
 
 def check_action(delta_t):
     acts_in_env = []
@@ -65,7 +64,7 @@ if __name__ == '__main__':
     agent = Agent()
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
-    UeReqs = stats.poisson.rvs(mu=NUM_UE_REQs, size=MAX_TIME + 1, random_state=None)
+    UeReqs = stats.poisson.rvs(mu=NUM_UE_REQs, size=MAX_TIME + 10, random_state=None)
     print(UeReqs)
     while delta_t<MAX_TIME:
         delta_t += 1
@@ -74,9 +73,15 @@ if __name__ == '__main__':
         action = agent.receive_observation(check_state(), delta_t)
         if action != None:
             action_on_road.append(AM(action,delta_t))
-        state, reward = env.send_observation(check_action(delta_t), delta_t)
-        state_on_road.append(SM(state, delta_t))
-        log.logger.debug('[System][time point: %d end]\n' % (delta_t))
+        state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 1])
+        state_on_road.append(SM(state, delta_t, reward))
+        if reward.value == None:
+            log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
+            log.logger.debug('[ENV][No reward]')
+        else:
+            log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
+            log.logger.debug('[ENV][newly reward: %f]' % (reward.value))
+        log.logger.debug('[System][time point: %d end]' % (delta_t))
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     save_plot(NUM_UE_REQs, env.model.amfList)

@@ -6,12 +6,13 @@ from logger import log
 
 
 class SM:
-    def __init__(self, state, id):
+    def __init__(self, state, id, reward):
         self.value = state
         self.trans_delay = np.random.uniform(1,3,None)
         self.current_status = self.trans_delay
         self.id = id
         self.time_step = 0
+        self.reward = reward
         log.logger.debug('[State][s[%d] is newly generated [%f]' % (self.id, self.current_status))
     def check_status(self):
         self.time_step += 1
