@@ -59,16 +59,17 @@ class FM:
         self.amfList[self.AMFIndex].close = True
 
     def step(self, action, id, tpS, tpE, delta_t):
+        log.logger.debug('[ENV][step] [%f ~ %f]' % (self.it_time, tpE + delta_t - 1))
         reward = 0
         if action == None:
             log.logger.debug('[FlowModel][No action is executed]')
 
         self.add_new_action = False
 
-        while self.it_time < tpE + delta_t - 1:
+        while self.it_time < (tpE + delta_t - 1):
             if action != None and self.it_time >= tpS + delta_t - 1 and self.add_new_action == False:
                 self.add_new_action = True
-                log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
+                #log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
                 if action == 1:
                     self.numAMF += 1
                     if self.numAMF > self.MAX_AMF_INST:
@@ -86,21 +87,21 @@ class FM:
                         self.check_close_which_AMF_Inst()
             self.it_time += self.time_interval
             log.logger.debug('[FlowModel][At time point: %f]' % (self.it_time))
-            log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (self.msgInRISE.qsize()))
+            #log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (self.msgInRISE.qsize()))
             if self.msgInRISE.qsize() > 0:
                 message = self.msgInRISE.get()
-                log.logger.debug('Message (%d, %d, %s) has been out of RISE, waiting to be AMF' % (message.ue_id, message.msg_id, message.msgType))
+                #log.logger.debug('Message (%d, %d, %s) has been out of RISE, waiting to be AMF' % (message.ue_id, message.msg_id, message.msgType))
                 self.msgUpOnRoad.put(message)
             else:
                 message = Msgs(0,0,'NULL')
-                log.logger.debug('No Messages in RISE already')
+                #log.logger.debug('No Messages in RISE already')
                 self.msgUpOnRoad.put(message)
             if self.msgUpOnRoad.qsize() >= self.Delay_Up_Link/self.time_interval:
-                log.logger.debug('msgUpOnRoad is full ...')
+                #log.logger.debug('msgUpOnRoad is full ...')
                 message = self.msgUpOnRoad.get()
                 if message.msg_id > 0:
                     self.check_available_AMF_Inst()
-                    log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))
+                    #log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))
                     self.amfList[self.AMFIndex].stateTrans(message.ue_id, message.msg_id, message.msgType, self.time_interval)
                     for i in range(len(self.amfList)):
                         if i == self.AMFIndex:
@@ -109,7 +110,7 @@ class FM:
                             self.amfList[i].stateTrans(0,0,'NULL',self.time_interval)
                     #self.AMFIndex = (self.AMFIndex + 1) % self.numAMF
                 else:
-                    log.logger.debug('No message is put into AMFs')
+                    #log.logger.debug('No message is put into AMFs')
                     for i in range(len(self.amfList)):
                         self.amfList[i].stateTrans(0,0,'NULL', self.time_interval)
             else:
@@ -117,23 +118,23 @@ class FM:
                     self.amfList[i].stateTrans(0, 0, 'NULL', self.time_interval)
             for i in range(len(self.amfList)):
                 if self.amfList[i].newMsg.msg_id > 0:
-                    log.logger.debug('AMF (%d) generate new message (%d, %d, %s) into msgDnOnRoad (%d)' % (i, self.amfList[i].newMsg.ue_id, self.amfList[i].newMsg.msg_id, self.amfList[i].newMsg.msgType, self.msgDnOnRoad.qsize()))
+                    #log.logger.debug('AMF (%d) generate new message (%d, %d, %s) into msgDnOnRoad (%d)' % (i, self.amfList[i].newMsg.ue_id, self.amfList[i].newMsg.msg_id, self.amfList[i].newMsg.msgType, self.msgDnOnRoad.qsize()))
                     message = Msgs(0,0,'NULL')
                     message.ue_id = self.amfList[i].newMsg.ue_id
                     message.msg_id = self.amfList[i].newMsg.msg_id
                     message.msgType = self.amfList[i].newMsg.msgType
                     self.msgDnOnRoad.put(message)
             if self.msgDnOnRoad.qsize() >= self.Delay_Down_Link / self.time_interval:
-                log.logger.debug('msgDnOnRoad is full ...')
+                #log.logger.debug('msgDnOnRoad is full ...')
                 message = self.msgDnOnRoad.get()
                 #log.logger.debug(message.ue_id, message.msg_id, message.msgType)
-                log.logger.debug('msgDnOnRoad.get: message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType))
+                #log.logger.debug('msgDnOnRoad.get: message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType))
                 if message.msg_id > 0 and message.msg_id < 6:
                     back_message = Msgs(message.ue_id, message.msg_id + 1, entities.reqMsgs[message.msg_id])
-                    log.logger.debug('Message (%d, %d, %s) has been sent back to RISE, RISE generate new message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType, back_message.ue_id, back_message.msg_id, back_message.msgType))
+                    #log.logger.debug('Message (%d, %d, %s) has been sent back to RISE, RISE generate new message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType, back_message.ue_id, back_message.msg_id, back_message.msgType))
                     self.msgInRISE.put(back_message)
-                else:
-                    log.logger.debug('RISE dosennot genearte new message any more')
+                #else:
+                    #log.logger.debug('RISE dosennot genearte new message any more')
             log.logger.debug('Statics (%d) AMFs ...' % (len(self.amfList)))
             for i in range(len(self.amfList)):
                 if self.amfList[i].close == True:

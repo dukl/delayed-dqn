@@ -15,6 +15,7 @@ class ENV():
     def step(self, action):
         print('aaa')
     def get_obs_rewards(self, n_input_msgs, acts, reward_bais, id):
+        log.logger.debug('[ENV][get_obs_rewards]')
         self.model.amfList.sort(key=lambda AmfEntity: AmfEntity.id, reverse=False)
         obs = [n_input_msgs]
         n_total_msgs = 0
@@ -38,7 +39,10 @@ class ENV():
         if acts[-1].value == 0:
             delta_x = 0.90 - ((n_input_msgs + n_total_msgs)/n_amf_inst)/200
         if acts[-1].value == -1:
-            delta_x = 0.90 - ((n_input_msgs + n_total_msgs*(n_amf_inst-1)/n_amf_inst)/(n_amf_inst-1))/200
+            if len(acts) == 1:
+                delta_x = 0.90 - (n_input_msgs + n_total_msgs)/200
+            else:
+                delta_x = 0.90 - ((n_input_msgs + n_total_msgs * (n_amf_inst - 1) / n_amf_inst) / (n_amf_inst - 1)) / 200
         rwdV = 0
         if delta_x >= 0:
             rwdV = 1/(delta_x + 0.001)
@@ -48,6 +52,7 @@ class ENV():
         reward = RM(id, rwdV, acts[-1].id, id)
         return obs, reward
     def send_observation(self, acts, delta_t, n_input_msgs):
+        log.logger.debug('[ENV][send_observation]')
         reward_bais = 0
         if delta_t == 0:
             return self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
@@ -68,10 +73,14 @@ class ENV():
                     reward_bais += self.model.step(None, None, tp[index], tp[index + 1], delta_t)
                     continue
                 else:
+                    log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[index].id, acts[index].value))
                     reward_bais += self.model.step(acts[index].value, acts[index].id, tp[index], tp[index+1], delta_t)
+                    log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[index].id, acts[index].value, reward_bais))
                 index += 1
             obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
+            log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[-1].id, acts[-1].value))
             reward_bais += self.model.step(acts[-1].value, acts[-1].id, acts[-1].time_left_in_env, 1, delta_t)
+            log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[-1].id, acts[-1].value, reward_bais))
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
             return obs, reward
