@@ -61,6 +61,7 @@ class FM:
             log.logger.debug('[FlowModel][AMF %d] has beed closed (n_msgs %d)' % (self.amfList[self.AMFIndex].id, self.amfList[self.AMFIndex].n_msgs))
             msgs = self.amfList[self.AMFIndex].message_queue
             del self.amfList[self.AMFIndex]
+            self.numAMF -= 1
             msgs_size = int(msgs.qsize() / len(self.amfList))
             for i in range(len(self.amfList)):
                 for j in range(msgs_size):
@@ -83,12 +84,12 @@ class FM:
         reward_bias = 0
         # log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
         if action == 1:
-            self.numAMF += 1
-            #if self.numAMF > self.MAX_AMF_INST:
-            #    log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
-            #    reward_bias -= 10
-            #else:
-            self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
+            if self.numAMF > self.MAX_AMF_INST:
+                log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
+                reward_bias -= 10
+            else:
+                self.numAMF += 1
+                self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
         if action == -1:
             if len(self.amfList) == 1:
                 reward_bias -= 100
