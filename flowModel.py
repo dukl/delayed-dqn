@@ -40,6 +40,7 @@ class FM:
             self.msgInRISE.put(message)
 
     def check_available_AMF_Inst(self):
+        self.AMFIndex = 0
         min_n_msgs = 10000
         for i in range(len(self.amfList)):
             if self.amfList[i].close == True:
@@ -49,14 +50,51 @@ class FM:
                 self.AMFIndex = i
 
     def check_close_which_AMF_Inst(self):
+        self.AMFIndex = 0
         max_n_msgs = 10000
         for i in range(len(self.amfList)):
-            if self.amfList[i].close == True:
-                continue
-            elif self.amfList[i].n_msgs > max_n_msgs:
+            if self.amfList[i].n_msgs > max_n_msgs:
                 max_n_msgs = self.amfList[i].n_msgs
                 self.AMFIndex = i
-        self.amfList[self.AMFIndex].close = True
+        if len(self.amfList) > 1:
+            log.logger.debug('[FlowModel][AMF %d] has beed closed (n_msgs %d)' % (self.amfList[self.AMFIndex].id, self.amfList[self.AMFIndex].n_msgs))
+            msgs = self.amfList[self.AMFIndex].message_queue
+            del self.amfList[self.AMFIndex]
+            msgs_size = int(msgs.qsize() / len(self.amfList))
+            for i in range(len(self.amfList)):
+                for j in range(msgs_size):
+                    self.amfList[i].message_queue.put(msgs.get())
+                log.logger.debug('[FlowModel][AMF %d][%d msgs]' % (self.amfList[i].id, self.amfList[i].message_queue.qsize()))
+                #self.amfList[self.AMFIndex].close = True
+
+    def check_delete_AMF_inst(self):
+        log.logger.debug('[FlowModel][check_delete_AMF_inst ...]')
+        index = []
+        for i in range(len(self.amfList)):
+            if self.amfList[i].close == True:
+                index.append(i)
+        log.logger.debug('[FlowModel][Killing amf inst with index: ' + ''.join(str(index)) + ']')
+        for i in range(len(index)):
+            log.logger.debug('[FlowModel][AMF %d] has beed killed' % self.amfList[index[len(index)-i-1]].id)
+            del self.amfList[index[len(index) - i - 1]]
+
+    def action_execution(self, action, delta_t):
+        reward_bias = 0
+        # log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
+        if action == 1:
+            self.numAMF += 1
+            #if self.numAMF > self.MAX_AMF_INST:
+            #    log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
+            #    reward_bias -= 10
+            #else:
+            self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
+        if action == -1:
+            if len(self.amfList) == 1:
+                reward_bias -= 100
+                log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
+            else:
+                self.check_close_which_AMF_Inst()
+        return reward_bias
 
     def step(self, action, id, tpS, tpE, delta_t):
         log.logger.debug('[ENV][step] [%f ~ %f]' % (self.it_time, tpE + delta_t - 1))
@@ -69,22 +107,7 @@ class FM:
         while self.it_time < (tpE + delta_t - 1):
             if action != None and self.it_time >= tpS + delta_t - 1 and self.add_new_action == False:
                 self.add_new_action = True
-                #log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
-                if action == 1:
-                    self.numAMF += 1
-                    if self.numAMF > self.MAX_AMF_INST:
-                        log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
-                        reward -= 10
-                    else:
-                        self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
-                if action == -1:
-                    self.numAMF -= 1
-                    if self.numAMF <= 0:
-                        reward -= 100
-                        self.numAMF = 1
-                        log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
-                    else:
-                        self.check_close_which_AMF_Inst()
+                reward = self.action_execution(action, delta_t)
             self.it_time += self.time_interval
             log.logger.debug('[FlowModel][At time point: %f]' % (self.it_time))
             #log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (self.msgInRISE.qsize()))
@@ -135,11 +158,12 @@ class FM:
                     self.msgInRISE.put(back_message)
                 #else:
                     #log.logger.debug('RISE dosennot genearte new message any more')
+            #self.check_delete_AMF_inst()
             log.logger.debug('Statics (%d) AMFs ...' % (len(self.amfList)))
             for i in range(len(self.amfList)):
                 if self.amfList[i].close == True:
-                    log.logger.debug('AMF (%d) has been closed' % (i))
-                log.logger.debug('AMF (%d) has (%d) messages' % (i, self.amfList[i].n_msgs))
+                    log.logger.debug('AMF (%d) has been closed' % (self.amfList[i].id))
+                log.logger.debug('AMF (%d) has (%d) messages' % (self.amfList[i].id, self.amfList[i].n_msgs))
         return reward
 
 

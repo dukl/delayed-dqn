@@ -29,6 +29,7 @@ class AmfEntity():
             #log.logger.debug('No Msg into AMF (%d) ...' % (self.id))
             if self.close == True:
                 log.logger.debug('AMF[%d] has been closed' % (self.id))
+                self.n_msgs = 0
             self.newMsg.ue_id = 0
             self.newMsg.msg_id = 0
             self.newMsg.msgType = 'NULL'
