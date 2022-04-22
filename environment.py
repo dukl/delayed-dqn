@@ -95,9 +95,9 @@ class ENV():
             return obs, reward
         else:
             log.logger.debug('[ENV][does not receive any actions at this time point]')
-            reward_bais += self.model.step(None, None, 0, 1, delta_t)
-            obs, reward = self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
+            #reward_bais += self.model.step(None, None, 0, 1, delta_t)
+            #obs, reward = self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
             #self.model.check_delete_AMF_inst()
-            return obs, reward
+            return None, None
 
 

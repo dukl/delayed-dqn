@@ -11,7 +11,7 @@ from scipy import stats
 
 delta_t = -1 # time step
 NUM_UE_REQs = 100
-MAX_TIME = 100
+MAX_TIME = 10
 
 state_on_road = []
 action_on_road = []
@@ -74,6 +74,9 @@ if __name__ == '__main__':
         if action != None:
             action_on_road.append(AM(action,delta_t))
         state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 1])
+        if state is None:
+            log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
+            continue
         state_on_road.append(SM(state, delta_t, reward))
         if reward.value == None:
             log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
