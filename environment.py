@@ -68,6 +68,21 @@ class ENV():
 
         reward = RM(id, rwdV, acts[-1].id, id)
         return obs, reward
+
+    def send_observation_no_delay(self, acts, delta_t, n_input_msgs):
+        reward_bias = 0
+        if delta_t == 0:
+            return self.get_obs_rewards(n_input_msgs, None, reward_bias, delta_t)
+        if len(acts) > 0:
+            obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
+            log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[0].id, acts[0].value))
+            reward_bias += self.model.step(acts[0].value, acts[0].id, 0, 1, delta_t)
+            log.logger.debug('[ENV][action %d] = %d is executed' % (acts[0].id, acts[0].value))
+            obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
+            reward.value += reward_bias
+            return obs, reward
+        else:
+            return None,None
     def send_observation(self, acts, delta_t, n_input_msgs):
         log.logger.debug('[ENV][send_observation]')
         reward_bais = 0
