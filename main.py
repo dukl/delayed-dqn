@@ -10,7 +10,7 @@ from scipy import stats
 
 
 delta_t = -1 # time step
-NUM_UE_REQs = 100
+NUM_UE_REQs = 20
 MAX_TIME = 400
 
 state_on_road = []
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
-    plt.plot(agent.model.epison_reward)
+    plt.plot(agent.epison_reward)
 
 
 

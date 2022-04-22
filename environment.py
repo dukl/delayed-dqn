@@ -58,6 +58,7 @@ class ENV():
             elif n_amf_inst > 1:
                 delta_x = 0.90 - (capacity * n_amf_inst /(n_amf_inst-1) + n_input_msgs/(n_amf_inst-1)) / AMF_CAPACITY
         rwdV = 0
+        log.logger.debug('[REWARD][delta_x: %f]' % (delta_x))
         if delta_x >= 0:
             rwdV = 1/(delta_x + 0.001)
         else:

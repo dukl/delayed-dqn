@@ -35,7 +35,7 @@ class Agent:
                 self.epison_reward.append(self.reward_sum)
                 self.reward_sum = 0
                 self.index = 0
-            if (self.step >= 400) and (self.step % 5 ==0):
+            if (self.step >= 50) and (self.step % 50 ==0):
                 log.logger.debug('[DQN][Training]')
                 self.model.learn()
             if self.pending_action is not None:
