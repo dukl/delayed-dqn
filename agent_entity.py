@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from logger import log
+from logger import log, logR
 #from DQN_Model.RL_brain import DeepQNetwork
 from DQN_Model.DQN_Keras import DQN
 
@@ -13,7 +13,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=200, memory_size=2000
+            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=50, memory_size=2000
         )
         self.step = 0
         self.pending_state = None
@@ -31,11 +31,13 @@ class Agent:
             log.logger.debug('[Agent][Step: %d]' % (self.step))
             if self.index <= 50 and obs[0].reward.value is not None:
                 self.reward_sum += obs[0].reward.value
+                logR.logger.debug('One Step Reward (%d): %f' % (self.index, obs[0].reward.value))
             else:
                 self.epison_reward.append(self.reward_sum)
+                logR.logger.debug('Epision Reward %d: %f' % (len(self.epison_reward), self.epison_reward[-1]))
                 self.reward_sum = 0
                 self.index = 0
-            if (self.step >= 50) and (self.step % 50 ==0):
+            if (self.step >= 50) and (self.step % 5 ==0):
                 log.logger.debug('[DQN][Training]')
                 self.model.learn()
             if self.pending_action is not None:

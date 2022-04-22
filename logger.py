@@ -33,8 +33,9 @@ class Logger(object):
 
 logFile = 'all.log'
 os.remove(logFile)
+os.remove('rewards.log')
 log = Logger(logFile, level='debug')
-
+logR = Logger('rewards.log', level='debug')
 #if __name__ == '__main__':
 #    log = Logger('all.log',level='debug')
 #    log.logger.debug('debug')

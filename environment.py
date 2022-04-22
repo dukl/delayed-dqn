@@ -102,7 +102,7 @@ class ENV():
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
 
-            reward.value = (reward.value - (-200)) / (100 - (-200))
+            #reward.value = (reward.value - (-200)) / (100 - (-200))
 
             return obs, reward
         else:
