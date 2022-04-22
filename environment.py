@@ -64,6 +64,9 @@ class ENV():
         else:
             rwdV = -math.exp(-delta_x)
         rwdV += reward_bais
+
+
+
         reward = RM(id, rwdV, acts[-1].id, id)
         return obs, reward
     def send_observation(self, acts, delta_t, n_input_msgs):

@@ -12,7 +12,7 @@ class FM:
         self.n_ue_reqs = n_ue_reqs
         self.n_amf_insts = 1
         self.it_time = 0
-        self.time_interval = 0.01
+        self.time_interval = 0.001
         self.Delay_Up_Link = 0.5
         self.Delay_Down_Link = 0.5
         self.msgUpOnRoad = Queue(maxsize=0)
@@ -26,6 +26,7 @@ class FM:
         self.add_new_action = False
         self.MAX_AMF_INST = 10
         self.usefulUpRoad = 0
+        self.amf_id = 0
 
     def update_ue_reqs_every_time_step(self, n_ue_reqs):
         for i in range(n_ue_reqs):
@@ -84,12 +85,13 @@ class FM:
         reward_bias = 0
         # log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
         if action == 1:
+            self.amf_id += 1
             if self.numAMF > self.MAX_AMF_INST:
                 log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
                 reward_bias -= 10
             else:
                 self.numAMF += 1
-                self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.numAMF - 1, delta_t))
+                self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.amf_id - 1, delta_t))
         if action == -1:
             if len(self.amfList) == 1:
                 reward_bias -= 100
