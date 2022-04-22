@@ -11,15 +11,18 @@ import math
 AMF_CAPACITY = 300
 
 class ENV(object):
-    def __init__(self):
+    def __init__(self, iscopy = False, other=None):
         self.old_ob  = None
-        self.model = FM(0)
+        self.model = FM(0, iscopy)
         self.deep_cp_attr = None
+        if other is not None:
+            self.__dict__ = copy.deepcopy(other.__dict__)
 
     def __deepcopy__(self, memodict={}):
         cpyobj = type(self)()
         cpyobj.deep_cp_attr = copy.deepcopy( memodict)
         return cpyobj
+
 
     def reset(self):
         print('aaa')
@@ -28,7 +31,7 @@ class ENV(object):
     def get_obs_rewards(self, n_input_msgs, acts, reward_bais, id):
         log.logger.debug('[ENV][get_obs_rewards]')
         #self.model.amfList.sort(key=lambda AmfEntity: AmfEntity.id, reverse=False)
-        obs = [n_input_msgs+self.model.msgInRISE.qsize(), self.model.usefulUpRoad, self.model.msgDnOnRoad.qsize(), self.model.Delay_Up_Link, self.model.Delay_Up_Link]
+        obs = [n_input_msgs+len(self.model.msgInRISE), self.model.usefulUpRoad, len(self.model.msgDnOnRoad), self.model.Delay_Up_Link, self.model.Delay_Up_Link]
         n_total_msgs = 0
         n_amf_inst = 0
         cpus, msgs = [], []

@@ -6,6 +6,8 @@ from logger import log, logR
 #from DQN_Model.RL_brain import DeepQNetwork
 from DQN_Model.DQN_Keras import DQN
 from copy import deepcopy
+from environment import ENV
+
 
 class Agent:
     def __init__(self):
@@ -48,9 +50,7 @@ class Agent:
                 log.logger.debug('[ENV][GT][changing over time]')
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
                 reward_bias = 0
-                envGT = deepcopy(obs[0].env)
-                log.logger.debug('[DeepCopied ENV][msgInRISE][%d]' % (envGT.model.msgInRISE.qsize()))
-                log.logger.debug('[Original ENV][msgInRISE][%d]' % (obs[0].env.model.msgInRISE.qsize()))
+                envGT = obs[0].env
                 reward_bias += envGT.model.step(None, None, 0, 1, 1+delay)
                 obsV, reward = envGT.get_obs_rewards(obs[0].inputMsgs, None, reward_bias, 0)
                 log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))

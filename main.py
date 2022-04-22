@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from environment import ENV
 from agent_entity import Agent
@@ -7,6 +9,7 @@ import matplotlib.pyplot as plt
 from logger import log
 import talib
 from scipy import stats
+from entities import AmfEntity
 
 
 delta_t = -1 # time step
@@ -59,6 +62,44 @@ def save_plot(num, amfList):
     plt.savefig(str(num)+'.jpg')
     plt.show()
 
+def envCopy(env):
+    log.logger.debug('[Original ENV][msgInRISE][%d][amflist: %d]' % (len(env.model.msgInRISE), len(env.model.amfList)))
+    copied_env = ENV(True)
+    log.logger.debug('[-DeepCopied ENV][msgInRISE][%d][amflist: %d]' % (len(copied_env.model.msgInRISE), len(copied_env.model.amfList)))
+    copied_env.model.total_ue_reqs = env.model.total_ue_reqs
+    copied_env.model.n_ue_reqs = env.model.n_ue_reqs
+    copied_env.model.n_amf_insts = env.model.n_amf_insts
+    copied_env.model.it_time = env.model.it_time
+    copied_env.model.time_interval = env.model.time_interval
+    copied_env.model.Delay_Up_Link = env.model.Delay_Up_Link
+    copied_env.model.Delay_Down_Link = env.model.Delay_Down_Link
+    for i in range(len(env.model.msgUpOnRoad)):
+        copied_env.model.msgUpOnRoad.append(copy.deepcopy(env.model.msgUpOnRoad[i]))
+    for i in range(len(env.model.msgDnOnRoad)):
+        copied_env.model.msgDnOnRoad.append(copy.deepcopy(env.model.msgDnOnRoad[i]))
+    for i in range(len(env.model.msgInRISE)):
+        copied_env.model.msgInRISE.append(copy.deepcopy(env.model.msgInRISE[i]))
+    copied_env.model.AMFIndex = env.model.AMFIndex
+    for i in range(len(env.model.amfList)):
+        copied_env.model.amfList.append(AmfEntity(env.model.amfList[i].n_cpu_cores, env.model.amfList[i].id, env.model.amfList[i].tp))
+        log.logger.debug('[DeepCopied ENV][msgInRISE][%d][amflist: %d]' % (
+            len(copied_env.model.msgInRISE), len(copied_env.model.amfList)))
+        copied_env.model.amfList[-1].n_msgs_record = copy.deepcopy(env.model.amfList[i].n_msgs_record)
+        copied_env.model.amfList[-1].time_point = copy.deepcopy(env.model.amfList[i].time_point)
+        for j in range(len(env.model.amfList[i].message_queue)):
+            copied_env.model.amfList[-1].message_queue.append(copy.deepcopy(env.model.amfList[i].message_queue[j]))
+
+    copied_env.model.numAMF = env.model.numAMF
+    for i in range(len(env.model.cpuInAMF)):
+        copied_env.model.cpuInAMF.append(copy.deepcopy(env.model.cpuInAMF[i]))
+    copied_env.model.add_new_action = env.model.add_new_action
+    copied_env.model.MAX_AMF_INST = env.model.MAX_AMF_INST
+    copied_env.model.usefulUpRoad = env.model.usefulUpRoad
+    copied_env.model.amf_id = env.model.amf_id
+    log.logger.debug('[DeepCopied ENV][msgInRISE][%d][amflist: %d]' % (len(copied_env.model.msgInRISE), len(copied_env.model.amfList)))
+    return copied_env
+
+
 if __name__ == '__main__':
     env = ENV()
     agent = Agent()
@@ -78,7 +119,7 @@ if __name__ == '__main__':
             log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
             continue
         state_on_road.append(SM(state, delta_t, reward))
-        state_on_road[-1].env = env
+        state_on_road[-1].env = envCopy(env)
         state_on_road[-1].inputMsgs = UeReqs[delta_t + 1]
 
         if reward.value == None:

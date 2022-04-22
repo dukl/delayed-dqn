@@ -5,9 +5,13 @@ import entities
 from entities import Msgs
 from entities import AmfEntity
 import numpy as np
+import copy
+import sys
+sys.setrecursionlimit(10000)
 
-class FM:
-    def __init__(self, n_ue_reqs):
+
+class FM(object):
+    def __init__(self, n_ue_reqs, iscopy=False):
         self.total_ue_reqs = n_ue_reqs
         self.n_ue_reqs = n_ue_reqs
         self.n_amf_insts = 1
@@ -15,23 +19,29 @@ class FM:
         self.time_interval = 0.001
         self.Delay_Up_Link = 0.5
         self.Delay_Down_Link = 0.5
-        self.msgUpOnRoad = Queue(maxsize=0)
-        self.msgDnOnRoad = Queue(maxsize=0)
-        self.msgInRISE   = Queue(maxsize=0)
+        self.msgUpOnRoad = []
+        self.msgDnOnRoad = []
+        self.msgInRISE   = []
         self.AMFIndex = 0
         self.amfList  = []
         self.numAMF   = 1
         self.cpuInAMF = []
-        self.initialize()
+        if iscopy is False:
+            self.initialize()
         self.add_new_action = False
         self.MAX_AMF_INST = 10
         self.usefulUpRoad = 0
         self.amf_id = 0
 
+    def __deepcopy__(self, memodict={}):
+        cpyobj = type(self)(0)
+        cpyobj.deep_cp_attr = copy.deepcopy(memodict)
+        return cpyobj
+
     def update_ue_reqs_every_time_step(self, n_ue_reqs):
         for i in range(n_ue_reqs):
             message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
-            self.msgInRISE.put(message)
+            self.msgInRISE.append(message)
         self.total_ue_reqs += n_ue_reqs
 
     def initialize(self):
@@ -39,7 +49,7 @@ class FM:
             self.amfList.append(AmfEntity(np.random.uniform(1,6,None), i, 0))
         for i in range(self.n_ue_reqs):
             message = Msgs(i+1, 1, 'RegistrationRequest')
-            self.msgInRISE.put(message)
+            self.msgInRISE.append(message)
 
     def check_available_AMF_Inst(self):
         self.AMFIndex = 0
@@ -63,10 +73,11 @@ class FM:
             msgs = self.amfList[self.AMFIndex].message_queue
             del self.amfList[self.AMFIndex]
             self.numAMF -= 1
-            msgs_size = int(msgs.qsize() / len(self.amfList))
+            msgs_size = int(len(msgs) / len(self.amfList))
             for i in range(len(self.amfList)):
                 for j in range(msgs_size):
-                    self.amfList[i].message_queue.put(msgs.get())
+                    self.amfList[i].message_queue.append(msgs[0])
+                    del msgs[0]
                 log.logger.debug('[FlowModel][AMF %d][%d msgs]' % (self.amfList[i].id, self.amfList[i].message_queue.qsize()))
                 #self.amfList[self.AMFIndex].close = True
 
@@ -114,19 +125,21 @@ class FM:
                 reward = self.action_execution(action, delta_t)
             self.it_time += self.time_interval
             log.logger.debug('[FlowModel][At time point: %f]' % (self.it_time))
-            #log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (self.msgInRISE.qsize()))
-            if self.msgInRISE.qsize() > 0:
-                message = self.msgInRISE.get()
+            log.logger.debug('[FlowModel][No. of Msgs in RISE: %d]' % (len(self.msgInRISE)))
+            if len(self.msgInRISE) > 0:
+                message = self.msgInRISE[0]
+                del self.msgInRISE[0]
                 #log.logger.debug('Message (%d, %d, %s) has been out of RISE, waiting to be AMF' % (message.ue_id, message.msg_id, message.msgType))
-                self.msgUpOnRoad.put(message)
+                self.msgUpOnRoad.append(message)
                 self.usefulUpRoad += 1
             else:
                 message = Msgs(0,0,'NULL')
                 #log.logger.debug('No Messages in RISE already')
-                self.msgUpOnRoad.put(message)
-            if self.msgUpOnRoad.qsize() >= self.Delay_Up_Link/self.time_interval:
+                self.msgUpOnRoad.append(message)
+            if len(self.msgUpOnRoad) >= self.Delay_Up_Link/self.time_interval:
                 #log.logger.debug('msgUpOnRoad is full ...')
-                message = self.msgUpOnRoad.get()
+                message = self.msgUpOnRoad[0]
+                del self.msgUpOnRoad[0]
                 if message.msg_id > 0:
                     self.usefulUpRoad -= 1
                     self.check_available_AMF_Inst()
@@ -152,16 +165,17 @@ class FM:
                     message.ue_id = self.amfList[i].newMsg.ue_id
                     message.msg_id = self.amfList[i].newMsg.msg_id
                     message.msgType = self.amfList[i].newMsg.msgType
-                    self.msgDnOnRoad.put(message)
-            if self.msgDnOnRoad.qsize() >= self.Delay_Down_Link / self.time_interval:
+                    self.msgDnOnRoad.append(message)
+            if len(self.msgDnOnRoad) >= self.Delay_Down_Link / self.time_interval:
                 #log.logger.debug('msgDnOnRoad is full ...')
-                message = self.msgDnOnRoad.get()
+                message = self.msgDnOnRoad[0]
+                del self.msgDnOnRoad[0]
                 #log.logger.debug(message.ue_id, message.msg_id, message.msgType)
                 #log.logger.debug('msgDnOnRoad.get: message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType))
                 if message.msg_id > 0 and message.msg_id < 6:
                     back_message = Msgs(message.ue_id, message.msg_id + 1, entities.reqMsgs[message.msg_id])
                     #log.logger.debug('Message (%d, %d, %s) has been sent back to RISE, RISE generate new message (%d, %d, %s)' % (message.ue_id, message.msg_id, message.msgType, back_message.ue_id, back_message.msg_id, back_message.msgType))
-                    self.msgInRISE.put(back_message)
+                    self.msgInRISE.append(back_message)
                 #else:
                     #log.logger.debug('RISE dosennot genearte new message any more')
             #self.check_delete_AMF_inst()

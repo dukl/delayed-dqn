@@ -1,6 +1,7 @@
 from logger import log
 from queue import Queue
 reqMsgs = ['RegistrationRequest', 'AuthenticationRequst', 'AuthenticationResponse', 'SecurityModeCommand', 'SecurityModeComplete', 'RegistrationComplete', 'NULL']
+import copy
 
 class AmfEntity():
     def __init__(self, n_cpu_cores, id, tp):
@@ -14,16 +15,22 @@ class AmfEntity():
         self.id = id
         self.close = False
         self.sameMsgIsProcessing = False
-        self.message_queue = Queue(maxsize=0)
+        self.message_queue = []
         self.oldMsg = Msgs(0, 0, 'NULL')
         self.newMsg = Msgs(0, 0, 'NULL')
+
+    def __deepcopy__(self, memodict={}):
+        cpyobj = type(self)(self.n_cpu_cores, self.id, self.tp)
+        cpyobj.deep_cp_attr = copy.deepcopy( memodict)
+        return cpyobj
+
     def stateTrans(self, ue_id, msg_id, msgType, dt):
         self.n_called += 1
         #log.logger.debug('AMF (%d) received Message (%d, %d, %s)' % (self.id, ue_id, msg_id, msgType))
         if msg_id > 0:
             message = Msgs(ue_id, msg_id, msgType)
-            self.message_queue.put(message)
-        if self.message_queue.qsize() == 0 and self.sameMsgIsProcessing == False:
+            self.message_queue.append(message)
+        if len(self.message_queue) == 0 and self.sameMsgIsProcessing == False:
             self.n_msgs_record.append(0)
             self.time_point.append(self.tp + self.n_called*dt)
             #log.logger.debug('No Msg into AMF (%d) ...' % (self.id))
@@ -40,7 +47,7 @@ class AmfEntity():
             #log.logger.debug('AMF (%d) iterate (%d)' % (self.id, self.n_iterate))
             #log.logger.debug('AMF (%d): Message Old (%d, %d, %s) has been processed (%f)' % (self.id, self.oldMsg.ue_id, self.oldMsg.msg_id, self.oldMsg.msgType, self.n_cpu_cores * 5 * dt * self.n_iterate))
             if self.n_cpu_cores*5*dt*self.n_iterate >= 1:
-                self.n_msgs = self.message_queue.qsize()
+                self.n_msgs = len(self.message_queue)
                 self.sameMsgIsProcessing = False
                 self.n_iterate = 0
                 if self.oldMsg.msg_id + 1 > 6:
@@ -55,9 +62,10 @@ class AmfEntity():
                     #log.logger.debug('AMF (%d) generates new message (%d, %d, %s)'%(self.id, self.newMsg.ue_id, self.newMsg.msg_id, self.newMsg.msgType))
             else:
                 self.n_iterate += 1
-                self.n_msgs = self.message_queue.qsize() + 1
-        elif self.message_queue.qsize() > 0 and self.sameMsgIsProcessing == False:
-            message = self.message_queue.get()
+                self.n_msgs = len(self.message_queue) + 1
+        elif len(self.message_queue) > 0 and self.sameMsgIsProcessing == False:
+            message = self.message_queue[0]
+            del self.message_queue[0]
             #log.logger.debug('AMF (%d) is processing Message (%d, %d, %s)' % (self.id, message.ue_id, message.msg_id, message.msgType))
             self.sameMsgIsProcessing = True
             self.oldMsg = message
@@ -67,7 +75,7 @@ class AmfEntity():
             self.newMsg.ue_id = 0
             self.newMsg.msg_id = 0
             self.newMsg.msgType = 'NULL'
-            self.n_msgs = self.message_queue.qsize() + 1
+            self.n_msgs = len(self.message_queue) + 1
         self.n_msgs_record.append(self.n_msgs)
         self.time_point.append(self.tp + self.n_called * dt)
         #log.logger.debug('AMF (%d) remains (%d) message' % (self.id, self.n_msgs))
@@ -79,5 +87,9 @@ class Msgs():
         self.ue_id = ue_id
         self.msgType = msgType
         self.msg_id = msg_id
+    def __deepcopy__(self, memodict={}):
+        cpyobj = type(self)(self.ue_id, self.msg_id, self.msgType)
+        cpyobj.deep_cp_attr = copy.deepcopy( memodict)
+        return cpyobj
 
 
