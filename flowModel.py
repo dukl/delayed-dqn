@@ -25,6 +25,7 @@ class FM:
         self.initialize()
         self.add_new_action = False
         self.MAX_AMF_INST = 10
+        self.usefulUpRoad = 0
 
     def update_ue_reqs_every_time_step(self, n_ue_reqs):
         for i in range(n_ue_reqs):
@@ -115,6 +116,7 @@ class FM:
                 message = self.msgInRISE.get()
                 #log.logger.debug('Message (%d, %d, %s) has been out of RISE, waiting to be AMF' % (message.ue_id, message.msg_id, message.msgType))
                 self.msgUpOnRoad.put(message)
+                self.usefulUpRoad += 1
             else:
                 message = Msgs(0,0,'NULL')
                 #log.logger.debug('No Messages in RISE already')
@@ -123,6 +125,7 @@ class FM:
                 #log.logger.debug('msgUpOnRoad is full ...')
                 message = self.msgUpOnRoad.get()
                 if message.msg_id > 0:
+                    self.usefulUpRoad -= 1
                     self.check_available_AMF_Inst()
                     #log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))
                     self.amfList[self.AMFIndex].stateTrans(message.ue_id, message.msg_id, message.msgType, self.time_interval)

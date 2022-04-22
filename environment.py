@@ -19,14 +19,20 @@ class ENV():
     def get_obs_rewards(self, n_input_msgs, acts, reward_bais, id):
         log.logger.debug('[ENV][get_obs_rewards]')
         #self.model.amfList.sort(key=lambda AmfEntity: AmfEntity.id, reverse=False)
-        obs = [n_input_msgs]
+        obs = [n_input_msgs+self.model.msgInRISE.qsize(), self.model.usefulUpRoad, self.model.msgDnOnRoad.qsize(), self.model.Delay_Up_Link, self.model.Delay_Up_Link]
         n_total_msgs = 0
         n_amf_inst = 0
-        for i in range(len(self.model.amfList)):
-            #if self.model.amfList[i].close != True:
-            n_amf_inst += 1
-            obs += [self.model.amfList[i].n_msgs, self.model.amfList[i].n_cpu_cores * 5]
-            n_total_msgs += self.model.amfList[i].n_msgs
+        cpus, msgs = [], []
+        for i in range(self.model.MAX_AMF_INST):
+            if i < len(self.model.amfList):
+                n_amf_inst += 1
+                n_total_msgs += self.model.amfList[i].n_msgs
+                cpus.append(self.model.amfList[i].n_cpu_cores)
+                msgs.append(self.model.amfList[i].n_msgs)
+            else:
+                cpus.append(0)
+                msgs.append(0)
+        obs = obs + cpus + msgs
         #for i in range(self.model.MAX_AMF_INST):
         #    if i < len(self.model.amfList):
         #        if self.model.amfList[i].close == True:
