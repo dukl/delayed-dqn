@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import tensorflow as tf
 from logger import log
@@ -8,10 +10,17 @@ import math
 
 AMF_CAPACITY = 300
 
-class ENV():
+class ENV(object):
     def __init__(self):
         self.old_ob  = None
         self.model = FM(0)
+        self.deep_cp_attr = None
+
+    def __deepcopy__(self, memodict={}):
+        cpyobj = type(self)()
+        cpyobj.deep_cp_attr = copy.deepcopy( memodict)
+        return cpyobj
+
     def reset(self):
         print('aaa')
     def step(self, action):

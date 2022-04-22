@@ -5,6 +5,7 @@ import numpy as np
 from logger import log, logR
 #from DQN_Model.RL_brain import DeepQNetwork
 from DQN_Model.DQN_Keras import DQN
+from copy import deepcopy
 
 class Agent:
     def __init__(self):
@@ -21,6 +22,7 @@ class Agent:
         self.epison_reward = []
         self.index = 0
         self.reward_sum = 0
+        self.isPredGT = True
 
     def receive_observation(self, obs, delta_t):
         if len(obs) > 0:
@@ -40,6 +42,19 @@ class Agent:
             if (self.step >= 50) and (self.step % 5 ==0):
                 log.logger.debug('[DQN][Training]')
                 self.model.learn()
+
+            delay = np.random.uniform(0,1,None)
+            if self.isPredGT is True:
+                log.logger.debug('[ENV][GT][changing over time]')
+                log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
+                reward_bias = 0
+                envGT = deepcopy(obs[0].env)
+                reward_bias += envGT.model.step(None, None, 0, 1, 1+delay)
+                obsV, reward = envGT.get_obs_rewards(obs[0].inputMsgs, None, reward_bias, 0)
+                log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))
+                del envGT
+                obs[0].value = obsV
+
             if self.pending_action is not None:
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(np.array(obs[0].value).reshape(1,25)[0])))
                 self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, np.array(obs[0].value).reshape(1,25)[0])
@@ -47,7 +62,7 @@ class Agent:
             action = self.model.choose_action(self.pending_state)
             self.pending_action = action
 
-            return self.action_space[action]
+            return self.action_space[action], delay
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
-            return None
+            return None, None

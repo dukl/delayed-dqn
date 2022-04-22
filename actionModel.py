@@ -3,11 +3,11 @@ import numpy as np
 import math
 
 class AM:
-    def __init__(self, action, id):
+    def __init__(self, action, id, delay):
         self.value = action
         self.id = id
         self.time_step = 0
-        self.current_status = np.random.uniform(0,1,None)
+        self.current_status = delay
         self.time_left_in_env = 0
     def check_status(self,delta_t):
         if self.id == delta_t:
@@ -16,7 +16,7 @@ class AM:
         self.time_step += 1
         time_diff = self.current_status - self.time_step
         if time_diff <= 0:
-            self.time_left_in_env = math.fabs(time_diff)
+            self.time_left_in_env = math.fabs(time_diff + 1)
             log.logger.debug('[Action][a[%d] arrived at the Env' % (self.id))
             return 'Arrived'
         else:

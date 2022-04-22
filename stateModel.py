@@ -13,6 +13,8 @@ class SM:
         self.id = id
         self.time_step = 0
         self.reward = reward
+        self.env = None
+        self.inputMsgs = 0
         log.logger.debug('[State][s[%d] is newly generated [%f]' % (self.id, self.current_status))
     def check_status(self):
         self.time_step += 1
