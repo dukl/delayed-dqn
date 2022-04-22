@@ -86,7 +86,7 @@ class FM:
         # log.logger.debug('[FlowModel][Action a[%d] = %d is executed]' % (id, action))
         if action == 1:
             self.amf_id += 1
-            if self.numAMF > self.MAX_AMF_INST:
+            if self.numAMF >= self.MAX_AMF_INST:
                 log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
                 reward_bias -= 10
             else:

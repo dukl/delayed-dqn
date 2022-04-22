@@ -66,7 +66,6 @@ class ENV():
         rwdV += reward_bais
 
 
-
         reward = RM(id, rwdV, acts[-1].id, id)
         return obs, reward
     def send_observation(self, acts, delta_t, n_input_msgs):
@@ -102,6 +101,9 @@ class ENV():
             log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[-1].id, acts[-1].value, reward_bais))
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
+
+            reward.value = (reward.value - (-200)) / (100 - (-200))
+
             return obs, reward
         else:
             log.logger.debug('[ENV][does not receive any actions at this time point]')
