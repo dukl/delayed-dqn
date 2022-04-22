@@ -18,14 +18,24 @@ class Agent:
         self.step = 0
         self.pending_state = None
         self.pending_action = None
+        self.epison_reward = []
+        self.index = 0
+        self.reward_sum = 0
 
     def receive_observation(self, obs, delta_t):
         if len(obs) > 0:
             for i in range(len(obs)):
                 log.logger.debug('[Agent][receives s['+ str(obs[i].id)+']] = '+''.join(str(obs[i].value)))
             self.step += 1
+            self.index += 1
             log.logger.debug('[Agent][Step: %d]' % (self.step))
-            if (self.step >= 50) and (self.step % 5 ==0):
+            if self.index <= 50 and obs[0].reward.value is not None:
+                self.reward_sum += obs[0].reward.value
+            else:
+                self.epison_reward.append(self.reward_sum)
+                self.reward_sum = 0
+                self.index = 0
+            if (self.step >= 400) and (self.step % 5 ==0):
                 log.logger.debug('[DQN][Training]')
                 self.model.learn()
             if self.pending_action is not None:
