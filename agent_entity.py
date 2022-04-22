@@ -49,6 +49,8 @@ class Agent:
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
                 reward_bias = 0
                 envGT = deepcopy(obs[0].env)
+                log.logger.debug('[DeepCopied ENV][msgInRISE][%d]' % (envGT.model.msgInRISE.qsize()))
+                log.logger.debug('[Original ENV][msgInRISE][%d]' % (obs[0].env.model.msgInRISE.qsize()))
                 reward_bias += envGT.model.step(None, None, 0, 1, 1+delay)
                 obsV, reward = envGT.get_obs_rewards(obs[0].inputMsgs, None, reward_bias, 0)
                 log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))

@@ -70,14 +70,17 @@ if __name__ == '__main__':
         delta_t += 1
         env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
         log.logger.debug('[System][time point: %d] begin, adding new %d UE Requests' % (delta_t, UeReqs[delta_t]))
-        action = agent.receive_observation(check_state(), delta_t)
+        action, delay_a = agent.receive_observation(check_state(), delta_t)
         if action != None:
-            action_on_road.append(AM(action,delta_t))
+            action_on_road.append(AM(action,delta_t, delay_a))
         state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 1])
         if state is None:
             log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
             continue
         state_on_road.append(SM(state, delta_t, reward))
+        state_on_road[-1].env = env
+        state_on_road[-1].inputMsgs = UeReqs[delta_t + 1]
+
         if reward.value == None:
             log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
             log.logger.debug('[ENV][No reward]')
