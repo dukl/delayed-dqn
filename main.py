@@ -11,7 +11,7 @@ from scipy import stats
 
 delta_t = -1 # time step
 NUM_UE_REQs = 100
-MAX_TIME = 10
+MAX_TIME = 120
 
 state_on_road = []
 action_on_road = []

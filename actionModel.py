@@ -11,7 +11,7 @@ class AM:
         self.time_left_in_env = 0
     def check_status(self,delta_t):
         if self.id == delta_t:
-            log.logger.debug('[Action][a[%d] is newly generated [%f]' % (self.id, self.current_status))
+            log.logger.debug('[Action][a[%d] = %d is newly generated [%f]' % (self.id, self.value, self.current_status))
             return 'NewAct'
         self.time_step += 1
         time_diff = self.current_status - self.time_step
