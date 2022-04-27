@@ -1,7 +1,9 @@
 import random
 
+import keras.models
 import numpy as np
 
+import DNN.dnn
 from logger import log, logR
 #from DQN_Model.RL_brain import DeepQNetwork
 from DQN_Model.DQN_Keras import DQN
@@ -25,6 +27,7 @@ class Agent:
         self.index = 0
         self.reward_sum = 0
         self.isPredGT = True
+        self.isPredDNN = False
 
     def receive_observation(self, obs, delta_t):
         if len(obs) > 0:
@@ -55,6 +58,13 @@ class Agent:
                 obsV, reward = envGT.get_obs_rewards(obs[0].inputMsgs, None, reward_bias, 0)
                 log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))
                 del envGT
+                obs[0].value = obsV
+            elif self.isPredDNN is True:
+                model = DNN.dnn.DNNModel(25,25)
+                model = keras.models.load_model('DNN/saved_model', compile=False)
+                model.load_weights('DNN/my_model_weights.h5', by_name=True)
+                model.compile(loss='mean_squared_error', optimizer=optimizers.Adam(0.0001))
+                obsV = model.predict(np.array(obs[0].value).reshape(1,25)[0])
                 obs[0].value = obsV
 
             if self.pending_action is not None:

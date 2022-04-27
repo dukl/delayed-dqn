@@ -81,7 +81,7 @@ class FM(object):
                 for j in range(msgs_size):
                     self.amfList[i].message_queue.append(msgs[0])
                     del msgs[0]
-                log.logger.debug('[FlowModel][AMF %d][%d msgs]' % (self.amfList[i].id, self.amfList[i].message_queue.qsize()))
+                log.logger.debug('[FlowModel][AMF %d][%d msgs]' % (self.amfList[i].id, len(self.amfList[i].message_queue)))
                 #self.amfList[self.AMFIndex].close = True
 
     def check_delete_AMF_inst(self):

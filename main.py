@@ -13,8 +13,8 @@ from entities import AmfEntity
 
 
 delta_t = -1 # time step
-NUM_UE_REQs = 20
-MAX_TIME = 10
+NUM_UE_REQs = 50
+MAX_TIME = 2000
 
 state_on_road = []
 action_on_road = []
@@ -134,6 +134,8 @@ if __name__ == '__main__':
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
     plt.plot(agent.epison_reward)
+    plt.savefig('reward_gt_pred.png')
+    plt.show()
 
 
 
