@@ -51,7 +51,7 @@ class Agent:
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
                 reward_bias = 0
                 envGT = obs[0].env
-                reward_bias += envGT.model.step(None, None, 0, 1, 1+delay)
+                reward_bias += envGT.model.step(None, None, 0, delay, envGT.model.it_time + 2)
                 obsV, reward = envGT.get_obs_rewards(obs[0].inputMsgs, None, reward_bias, 0)
                 log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))
                 del envGT

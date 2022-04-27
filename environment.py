@@ -121,7 +121,8 @@ class ENV(object):
                     reward_bais += self.model.step(acts[index].value, acts[index].id, tp[index], tp[index+1], delta_t)
                     log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[index].id, acts[index].value, reward_bais))
                 index += 1
-            obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
+            obs_, reward = self.get_obs_rewards(0, acts, reward_bais, delta_t)
+            log.logger.debug('[ENV][Get Current States]\n %s' % (str(obs_)))
             #self.model.check_delete_AMF_inst()
             log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[-1].id, acts[-1].value))
             reward_bais += self.model.step(acts[-1].value, acts[-1].id, acts[-1].time_left_in_env, 1, delta_t)

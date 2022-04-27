@@ -79,11 +79,11 @@ def envCopy(env):
         copied_env.model.msgDnOnRoad.append(copy.deepcopy(env.model.msgDnOnRoad[i]))
     for i in range(len(env.model.msgInRISE)):
         copied_env.model.msgInRISE.append(copy.deepcopy(env.model.msgInRISE[i]))
+    for i in range(len(env.model.inputMsgs)):
+        copied_env.model.inputMsgs.append(env.model.inputMsgs[i])
     copied_env.model.AMFIndex = env.model.AMFIndex
     for i in range(len(env.model.amfList)):
         copied_env.model.amfList.append(AmfEntity(env.model.amfList[i].n_cpu_cores, env.model.amfList[i].id, env.model.amfList[i].tp))
-        log.logger.debug('[DeepCopied ENV][msgInRISE][%d][amflist: %d]' % (
-            len(copied_env.model.msgInRISE), len(copied_env.model.amfList)))
         copied_env.model.amfList[-1].n_msgs_record = copy.deepcopy(env.model.amfList[i].n_msgs_record)
         copied_env.model.amfList[-1].time_point = copy.deepcopy(env.model.amfList[i].time_point)
         for j in range(len(env.model.amfList[i].message_queue)):
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
     UeReqs = stats.poisson.rvs(mu=NUM_UE_REQs, size=MAX_TIME + 10, random_state=None)
-    print(UeReqs)
+    log.logger.debug('[System][Input Msgs] \n %s' % (str(UeReqs)))
     while delta_t<MAX_TIME:
         delta_t += 1
         env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
@@ -114,13 +114,14 @@ if __name__ == '__main__':
         action, delay_a = agent.receive_observation(check_state(), delta_t)
         if action != None:
             action_on_road.append(AM(action,delta_t, delay_a))
-        state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 1])
+        state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
         if state is None:
             log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
             continue
         state_on_road.append(SM(state, delta_t, reward))
         state_on_road[-1].env = envCopy(env)
-        state_on_road[-1].inputMsgs = UeReqs[delta_t + 1]
+        state_on_road[-1].inputMsgs = 0
+        state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 1])
 
         if reward.value == None:
             log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
