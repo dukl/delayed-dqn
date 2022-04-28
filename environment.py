@@ -60,25 +60,36 @@ class ENV(object):
             reward = RM(id, None, None, id)
             return obs, reward
         n_total_msgs += len(self.model.msgInRISE) + self.model.usefulUpRoad + len(self.model.msgDnOnRoad)
+        running_time = acts[-1].current_status
         delta_x = 0
         if acts[-1].value == 1:
             capacity = n_total_msgs / (n_amf_inst + 1)
-            capacity -= 20 * (1 - acts[0].time_left_in_env)
+            capacity -= 20 * (1 - running_time)
+            if capacity < 0:
+                capacity = 0
             delta_x = (0.90 - capacity/AMF_CAPACITY)/0.9 - (n_amf_inst + 1)/20 # only support maximum 20 AMFs
         if acts[-1].value == 0:
             capacity = n_total_msgs / (n_amf_inst)
-            capacity -= 20 * (1 - acts[0].time_left_in_env)
+            capacity -= 20 * (1 - running_time)
+            if capacity < 0:
+                capacity = 0
             delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20  # only support maximum 20 AMFs
         if acts[-1].value == -1:
             if n_amf_inst == 1:
                 capacity = n_total_msgs / (n_amf_inst)
-                capacity -= 20 * (1 - acts[0].time_left_in_env)
+                capacity -= 20 * (1 - running_time)
+                if capacity < 0:
+                    capacity = 0
                 delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20  # only support maximum 20 AMFs
             elif n_amf_inst > 1:
                 capacity = n_total_msgs / (n_amf_inst - 1)
-                capacity -= 20 * (1 - acts[0].time_left_in_env)
+                capacity -= 20 * (1 - running_time)
+                if capacity < 0:
+                    capacity = 0
                 delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst - 1) / 20  # only support maximum 20 AMFs
         rwdV = 0
+        delta_x += 0.5 # 10 / 20
+        log.logger.debug('[REWARD][%d, %d, %d, %f, %f, %f]' % (acts[-1].value, n_total_msgs, n_amf_inst, 1- running_time, capacity, delta_x))
         log.logger.debug('[REWARD][delta_x: %f]' % (delta_x))
         #if delta_x >= 0:
         #    rwdV = 1/(delta_x + 0.001)
@@ -139,7 +150,7 @@ class ENV(object):
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
 
-            #reward.value = (reward.value - (-500)) / (100 - (-500))
+            reward.value = (reward.value - (-1)) / (1.5 - (-1))
 
             return obs, reward
         else:

@@ -32,8 +32,10 @@ class FM(object):
         self.add_new_action = False
         self.MAX_AMF_INST = 10
         self.usefulUpRoad = 0
-        self.amf_id = 0
+        self.amf_id = 1
         self.inputMsgs = []
+        self.n_discard_msgs = 0
+        self.n_request_msgs = 0
 
 
     def __deepcopy__(self, memodict={}):
@@ -56,14 +58,16 @@ class FM(object):
             self.msgInRISE.append(message)
 
     def check_available_AMF_Inst(self):
-        self.AMFIndex = 0
+        self.AMFIndex = -1
         min_n_msgs = 10000
         for i in range(len(self.amfList)):
-            if self.amfList[i].close == True:
+            if self.amfList[i].close == True or (len(self.amfList[i].message_queue)+1)>300*0.9:
                 continue
             elif self.amfList[i].n_msgs < min_n_msgs:
                 min_n_msgs = self.amfList[i].n_msgs
                 self.AMFIndex = i
+        if self.AMFIndex == -1:
+            self.n_discard_msgs += 1
 
     def check_close_which_AMF_Inst(self):
         self.AMFIndex = 0
@@ -80,10 +84,12 @@ class FM(object):
             msgs_size = int(len(msgs) / len(self.amfList))
             for i in range(len(self.amfList)):
                 for j in range(msgs_size):
-                    self.amfList[i].message_queue.append(msgs[0])
-                    del msgs[0]
+                    if len(self.amfList[i].message_queue) + 1 <= 300*0.9:
+                        self.amfList[i].message_queue.append(msgs[0])
+                        del msgs[0]
                 log.logger.debug('[FlowModel][AMF %d][%d msgs]' % (self.amfList[i].id, len(self.amfList[i].message_queue)))
                 #self.amfList[self.AMFIndex].close = True
+            self.n_discard_msgs += len(msgs)
 
     def check_delete_AMF_inst(self):
         log.logger.debug('[FlowModel][check_delete_AMF_inst ...]')
@@ -103,13 +109,13 @@ class FM(object):
             self.amf_id += 1
             if self.numAMF >= self.MAX_AMF_INST:
                 log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
-                reward_bias -= 10
+                reward_bias -= 1
             else:
                 self.numAMF += 1
                 self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.amf_id - 1, delta_t))
         if action == -1:
             if len(self.amfList) == 1:
-                reward_bias -= 100
+                reward_bias -= 1
                 log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
             else:
                 self.check_close_which_AMF_Inst()
@@ -166,13 +172,14 @@ class FM(object):
                 #log.logger.debug('msgUpOnRoad is full ...')
                 message = self.msgUpOnRoad[0]
                 del self.msgUpOnRoad[0]
+                self.n_request_msgs += 1
                 if message.msg_id > 0:
                     self.usefulUpRoad -= 1
                     self.check_available_AMF_Inst()
                     #log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))
-                    self.amfList[self.AMFIndex].stateTrans(message.ue_id, message.msg_id, message.msgType, self.time_interval)
                     for i in range(len(self.amfList)):
                         if i == self.AMFIndex:
+                            self.amfList[self.AMFIndex].stateTrans(message.ue_id, message.msg_id, message.msgType, self.time_interval)
                             continue
                         else:
                             self.amfList[i].stateTrans(0,0,'NULL',self.time_interval)

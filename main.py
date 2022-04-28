@@ -139,6 +139,7 @@ if __name__ == '__main__':
                 log.logger.debug('[ENV][newly reward: %f]' % (reward.value))
             log.logger.debug('[System][time point: %d end]\n' % (delta_t))
         logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
+        logR.logger.debug('Episode discard rate: (%d / %d = %f)' % (env.model.n_discard_msgs, env.model.n_request_msgs, env.model.n_discard_msgs/env.model.n_request_msgs))
         agent.epison_reward.append(agent.reward_sum)
         agent.model.learn()
         #if (delta_t + 1) % 30 == 0:
