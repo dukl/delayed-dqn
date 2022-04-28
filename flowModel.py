@@ -17,7 +17,7 @@ class FM(object):
         self.n_ue_reqs = n_ue_reqs
         self.n_amf_insts = 1
         self.it_time = 0
-        self.time_interval = 0.001
+        self.time_interval = 0.01
         self.Delay_Up_Link = 0.5
         self.Delay_Down_Link = 0.5
         self.msgUpOnRoad = []
@@ -34,6 +34,7 @@ class FM(object):
         self.usefulUpRoad = 0
         self.amf_id = 0
         self.inputMsgs = []
+
 
     def __deepcopy__(self, memodict={}):
         cpyobj = type(self)(0)

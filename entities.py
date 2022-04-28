@@ -44,8 +44,8 @@ class AmfEntity():
             #log.logger.debug('AMF (%d) return message (%d, %d, %s)' % (self.id, self.newMsg.ue_id, self.newMsg.msg_id, self.newMsg.msgType))
             return self.newMsg
         if self.sameMsgIsProcessing == True:
-            #log.logger.debug('AMF (%d) iterate (%d)' % (self.id, self.n_iterate))
-            #log.logger.debug('AMF (%d): Message Old (%d, %d, %s) has been processed (%f)' % (self.id, self.oldMsg.ue_id, self.oldMsg.msg_id, self.oldMsg.msgType, self.n_cpu_cores * 5 * dt * self.n_iterate))
+            log.logger.debug('AMF (%d) iterate (%d)' % (self.id, self.n_iterate))
+            log.logger.debug('AMF (%d): Message Old (%d, %d, %s) has been processed (%f)' % (self.id, self.oldMsg.ue_id, self.oldMsg.msg_id, self.oldMsg.msgType, self.n_cpu_cores * 5 * dt * self.n_iterate))
             if self.n_cpu_cores*5*dt*self.n_iterate >= 1:
                 self.n_msgs = len(self.message_queue)
                 self.sameMsgIsProcessing = False
@@ -66,7 +66,7 @@ class AmfEntity():
         elif len(self.message_queue) > 0 and self.sameMsgIsProcessing == False:
             message = self.message_queue[0]
             del self.message_queue[0]
-            #log.logger.debug('AMF (%d) is processing Message (%d, %d, %s)' % (self.id, message.ue_id, message.msg_id, message.msgType))
+            log.logger.debug('AMF (%d) is processing Message (%d, %d, %s)' % (self.id, message.ue_id, message.msg_id, message.msgType))
             self.sameMsgIsProcessing = True
             self.oldMsg = message
             #log.logger.debug('AMF (%d) iterate (%d)' % (self.id, self.n_iterate))

@@ -18,7 +18,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=50, memory_size=2000
+            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=10, memory_size=2000
         )
         self.step = 0
         self.pending_state = None
@@ -26,7 +26,15 @@ class Agent:
         self.epison_reward = []
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = True
+        self.isPredGT = False
+        self.isPredDNN = False
+    def reset(self):
+        self.step = 0
+        self.pending_state = None
+        self.pending_action = None
+        self.index = 0
+        self.reward_sum = 0
+        self.isPredGT = False
         self.isPredDNN = False
 
     def receive_observation(self, obs, delta_t):
@@ -36,17 +44,17 @@ class Agent:
             self.step += 1
             self.index += 1
             log.logger.debug('[Agent][Step: %d]' % (self.step))
-            if self.index <= 50 and obs[0].reward.value is not None:
+            if obs[0].reward.value is not None:
                 self.reward_sum += obs[0].reward.value
                 logR.logger.debug('One Step Reward (%d): %f' % (self.index, obs[0].reward.value))
-            else:
-                self.epison_reward.append(self.reward_sum)
-                logR.logger.debug('Epision Reward %d: %f' % (len(self.epison_reward), self.epison_reward[-1]))
-                self.reward_sum = 0
-                self.index = 0
-            if (self.step >= 50) and (self.step % 5 ==0):
-                log.logger.debug('[DQN][Training]')
-                self.model.learn()
+            #else:
+            #    self.epison_reward.append(self.reward_sum)
+            #    logR.logger.debug('Epision Reward %d: %f' % (len(self.epison_reward), self.epison_reward[-1]))
+            #    self.reward_sum = 0
+            #    self.index = 0
+            #if (self.step >= 50) and (self.step % 5 ==0):
+            #    log.logger.debug('[DQN][Training]')
+            #    self.model.learn()
 
             delay = np.random.uniform(0,1,None)
             if self.isPredGT is True:

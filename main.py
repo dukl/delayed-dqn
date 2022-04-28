@@ -6,15 +6,15 @@ from agent_entity import Agent
 from stateModel import SM
 from actionModel import AM
 import matplotlib.pyplot as plt
-from logger import log
+from logger import log, logR
 import talib
 from scipy import stats
 from entities import AmfEntity
 
 
 delta_t = -1 # time step
-NUM_UE_REQs = 50
-MAX_TIME = 2000
+NUM_UE_REQs = 20
+MAX_TIME = 100
 
 state_on_road = []
 action_on_road = []
@@ -105,31 +105,42 @@ if __name__ == '__main__':
     agent = Agent()
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
-    UeReqs = stats.poisson.rvs(mu=NUM_UE_REQs, size=MAX_TIME + 10, random_state=None)
-    log.logger.debug('[System][Input Msgs] \n %s' % (str(UeReqs)))
-    while delta_t<MAX_TIME:
-        delta_t += 1
-        env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
-        log.logger.debug('[System][time point: %d] begin, adding new %d UE Requests' % (delta_t, UeReqs[delta_t]))
-        action, delay_a = agent.receive_observation(check_state(), delta_t)
-        if action != None:
-            action_on_road.append(AM(action,delta_t, delay_a))
-        state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
-        if state is None:
-            log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
-            continue
-        state_on_road.append(SM(state, delta_t, reward))
-        state_on_road[-1].env = envCopy(env)
-        state_on_road[-1].inputMsgs = 0
-        state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 1])
+    for ep in range(1000):
+        log.logger.debug('[System][Episode][%d]' % (ep+1))
+        env.reset()
+        agent.reset()
+        agent.reward_sum = 0
+        UeReqs = stats.poisson.rvs(mu=NUM_UE_REQs, size=MAX_TIME + 10, random_state=None)
+        log.logger.debug('[System][Input Msgs] \n %s' % (str(UeReqs)))
+        delta_t = -1
+        state_on_road.clear()
+        action_on_road.clear()
+        while delta_t<MAX_TIME:
+            delta_t += 1
+            env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
+            log.logger.debug('[System][time point: %d] begin, adding new %d UE Requests' % (delta_t, UeReqs[delta_t]))
+            action, delay_a = agent.receive_observation(check_state(), delta_t)
+            if action != None:
+                action_on_road.append(AM(action,delta_t, delay_a))
+            state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
+            if state is None:
+                log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
+                continue
+            state_on_road.append(SM(state, delta_t, reward))
+            state_on_road[-1].env = envCopy(env)
+            state_on_road[-1].inputMsgs = 0
+            state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 1])
 
-        if reward.value == None:
-            log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
-            log.logger.debug('[ENV][No reward]')
-        else:
-            log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
-            log.logger.debug('[ENV][newly reward: %f]' % (reward.value))
-        log.logger.debug('[System][time point: %d end]\n' % (delta_t))
+            if reward.value == None:
+                log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
+                log.logger.debug('[ENV][No reward]')
+            else:
+                log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
+                log.logger.debug('[ENV][newly reward: %f]' % (reward.value))
+            log.logger.debug('[System][time point: %d end]\n' % (delta_t))
+        logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
+        agent.epison_reward.append(agent.reward_sum)
+        agent.model.learn()
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)

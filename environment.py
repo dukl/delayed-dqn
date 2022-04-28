@@ -25,7 +25,8 @@ class ENV(object):
 
 
     def reset(self):
-        print('aaa')
+        del self.model
+        self.model = FM(0, iscopy=False)
     def step(self, action):
         print('aaa')
     def get_obs_rewards(self, n_input_msgs, acts, reward_bais, id):
@@ -58,24 +59,32 @@ class ENV(object):
         if acts == None:
             reward = RM(id, None, None, id)
             return obs, reward
-        capacity = n_total_msgs/n_amf_inst
+        n_total_msgs += len(self.model.msgInRISE) + self.model.usefulUpRoad + len(self.model.msgDnOnRoad)
         delta_x = 0
         if acts[-1].value == 1:
-            delta_x = 0.90 - ((n_input_msgs - capacity)/(n_amf_inst+1) + capacity)/AMF_CAPACITY
+            capacity = n_total_msgs / (n_amf_inst + 1)
+            capacity -= 20 * (1 - acts[0].time_left_in_env)
+            delta_x = (0.90 - capacity/AMF_CAPACITY)/0.9 - (n_amf_inst + 1)/20 # only support maximum 20 AMFs
         if acts[-1].value == 0:
-            delta_x = 0.90 - (n_input_msgs/n_amf_inst + capacity)/AMF_CAPACITY
+            capacity = n_total_msgs / (n_amf_inst)
+            capacity -= 20 * (1 - acts[0].time_left_in_env)
+            delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20  # only support maximum 20 AMFs
         if acts[-1].value == -1:
             if n_amf_inst == 1:
-                delta_x = 0.90 - (n_input_msgs + capacity)/AMF_CAPACITY
+                capacity = n_total_msgs / (n_amf_inst)
+                capacity -= 20 * (1 - acts[0].time_left_in_env)
+                delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20  # only support maximum 20 AMFs
             elif n_amf_inst > 1:
-                delta_x = 0.90 - (capacity * n_amf_inst /(n_amf_inst-1) + n_input_msgs/(n_amf_inst-1)) / AMF_CAPACITY
+                capacity = n_total_msgs / (n_amf_inst - 1)
+                capacity -= 20 * (1 - acts[0].time_left_in_env)
+                delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst - 1) / 20  # only support maximum 20 AMFs
         rwdV = 0
         log.logger.debug('[REWARD][delta_x: %f]' % (delta_x))
-        if delta_x >= 0:
-            rwdV = 1/(delta_x + 0.001)
-        else:
-            rwdV = -math.exp(-delta_x)
-        rwdV += reward_bais
+        #if delta_x >= 0:
+        #    rwdV = 1/(delta_x + 0.001)
+        #else:
+        #    rwdV = -math.exp(-delta_x)
+        rwdV = delta_x + reward_bais
 
 
         reward = RM(id, rwdV, acts[-1].id, id)
@@ -130,7 +139,7 @@ class ENV(object):
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
 
-            #reward.value = (reward.value - (-200)) / (100 - (-200))
+            #reward.value = (reward.value - (-500)) / (100 - (-500))
 
             return obs, reward
         else:
