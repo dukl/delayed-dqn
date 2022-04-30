@@ -18,7 +18,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=10, memory_size=2000
+            3, 25, learning_rate=0.0001, reward_decay=0.9, e_greedy=0.99, replace_target_iter=200, memory_size=100000
         )
         self.step = 0
         self.pending_state = None

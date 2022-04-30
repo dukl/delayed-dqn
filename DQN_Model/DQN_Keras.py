@@ -51,10 +51,12 @@ class DQN:
         eval_inputs = Input(shape=(self.n_features,))
         x = Dense(64, activation='relu')(eval_inputs)
         x = Dense(64, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
         self.q_eval = Dense(self.n_actions)(x)
         # 构建target网络，注意这个target层输出是q_next而不是，算法中的q_target
         target_inputs = Input(shape=(self.n_features,))
         x = Dense(64, activation='relu')(target_inputs)
+        x = Dense(64, activation='relu')(x)
         x = Dense(64, activation='relu')(x)
         self.q_next = Dense(self.n_actions)(x)
 

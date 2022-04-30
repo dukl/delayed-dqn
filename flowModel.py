@@ -172,8 +172,8 @@ class FM(object):
                 #log.logger.debug('msgUpOnRoad is full ...')
                 message = self.msgUpOnRoad[0]
                 del self.msgUpOnRoad[0]
-                self.n_request_msgs += 1
                 if message.msg_id > 0:
+                    self.n_request_msgs += 1
                     self.usefulUpRoad -= 1
                     self.check_available_AMF_Inst()
                     #log.logger.debug('Message (%d, %d, %s) has arieved at AMF (%d), to be processed' % (message.ue_id, message.msg_id, message.msgType, self.AMFIndex))

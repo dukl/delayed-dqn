@@ -14,7 +14,7 @@ from entities import AmfEntity
 
 delta_t = -1 # time step
 NUM_UE_REQs = 20
-MAX_TIME = 100
+MAX_TIME = 200
 
 state_on_road = []
 action_on_road = []
@@ -105,7 +105,8 @@ if __name__ == '__main__':
     agent = Agent()
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
-    for ep in range(1000):
+    learn_index = 0
+    for ep in range(2000):
         log.logger.debug('[System][Episode][%d]' % (ep+1))
         env.reset()
         agent.reset()
@@ -141,7 +142,9 @@ if __name__ == '__main__':
         logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
         logR.logger.debug('Episode discard rate: (%d / %d = %f)' % (env.model.n_discard_msgs, env.model.n_request_msgs, env.model.n_discard_msgs/env.model.n_request_msgs))
         agent.epison_reward.append(agent.reward_sum)
-        agent.model.learn()
+        if (learn_index > 200) and (learn_index % 5 == 0):
+            agent.model.learn()
+        learn_index += 1
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
