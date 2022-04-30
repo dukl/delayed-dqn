@@ -142,9 +142,8 @@ if __name__ == '__main__':
         logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
         logR.logger.debug('Episode discard rate: (%d / %d = %f)' % (env.model.n_discard_msgs, env.model.n_request_msgs, env.model.n_discard_msgs/env.model.n_request_msgs))
         agent.epison_reward.append(agent.reward_sum)
-        if (learn_index > 200) and (learn_index % 5 == 0):
+        if (agent.model.memory_counter >= 2000) and (agent.model.memory_counter % 100 == 0):
             agent.model.learn()
-        learn_index += 1
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
