@@ -18,7 +18,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.0001, reward_decay=0.9, e_greedy=0.99, replace_target_iter=200, memory_size=100000, batch_size=1500
+            3, 25, learning_rate=0.0001, reward_decay=0.9, e_greedy=0.99, replace_target_iter=200, memory_size=100000, batch_size=1600
         )
         self.step = 0
         self.pending_state = None
@@ -78,6 +78,8 @@ class Agent:
             if self.pending_action is not None:
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(np.array(obs[0].value).reshape(1,25)[0])))
                 self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, np.array(obs[0].value).reshape(1,25)[0])
+                if (self.model.memory_counter >= 2000) and (self.model.memory_counter % 100 == 0):
+                    self.model.learn()
             self.pending_state = np.array(obs[0].value).reshape(1, 25)[0]
             action = self.model.choose_action(self.pending_state)
             self.pending_action = action
