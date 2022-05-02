@@ -15,6 +15,7 @@ class ENV(object):
         self.old_ob  = None
         self.model = FM(0, iscopy)
         self.deep_cp_attr = None
+        self.action_seq = []
         if other is not None:
             self.__dict__ = copy.deepcopy(other.__dict__)
 
@@ -90,7 +91,7 @@ class ENV(object):
         rwdV = 0
         delta_x += 0.5 # 10 / 20
         log.logger.debug('[REWARD][%d, %d, %d, %f, %f, %f]' % (acts[-1].value, n_total_msgs, n_amf_inst, 1- running_time, capacity, delta_x))
-        log.logger.debug('[REWARD][delta_x: %f]' % (delta_x))
+        log.logger.debug('[REWARD][return reward: %f]' % (delta_x + reward_bais))
         #if delta_x >= 0:
         #    rwdV = 1/(delta_x + 0.001)
         #else:
@@ -122,6 +123,7 @@ class ENV(object):
             return self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
         tp = [0]
         if len(acts) > 0:
+            self.action_seq.append(acts[0].value)
             #if len(acts) == 1:
             #    reward_bais += self.model.step(None, None, 0, 1, delta_t)
             #    obs, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bais)

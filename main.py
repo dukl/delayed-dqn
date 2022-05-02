@@ -13,7 +13,7 @@ from entities import AmfEntity
 
 
 delta_t = -1 # time step
-NUM_UE_REQs = 20
+NUM_UE_REQs = 60
 MAX_TIME = 200
 
 state_on_road = []
@@ -137,7 +137,7 @@ if __name__ == '__main__':
                 log.logger.debug('[ENV][No reward]')
             else:
                 log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
-                log.logger.debug('[ENV][newly reward: %f]' % (reward.value))
+                log.logger.debug('[ENV][newly reward: %f with action %d]' % (reward.value, env.action_seq[-1]))
             log.logger.debug('[System][time point: %d end]\n' % (delta_t))
         logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
         logR.logger.debug('Episode discard rate: (%d / %d = %f)' % (env.model.n_discard_msgs, env.model.n_request_msgs, env.model.n_discard_msgs/env.model.n_request_msgs))
