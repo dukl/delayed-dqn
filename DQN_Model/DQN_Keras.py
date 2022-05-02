@@ -5,7 +5,7 @@ import tensorflow.keras
 from tensorflow.keras.optimizers import RMSprop , Adam
 from tensorflow.keras import backend as K
 
-from logger import log
+from logger import log,logR
 
 np.random.seed(1)
 
@@ -82,6 +82,7 @@ class DQN:
             log.logger.debug('[DQN][Chose Action with DQN Model]')
             logR.logger.debug('[DQN][Chose Action with DQN Model]')
             actions_value = self.model1.predict(observation)
+            logR.logger.debug('Generated Action Value: %s' % (str(actions_value)))
             action = np.argmax(actions_value)
         else:
             log.logger.debug('[DQN][Chose Action Randomly]')

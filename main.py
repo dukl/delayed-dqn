@@ -124,6 +124,7 @@ if __name__ == '__main__':
             if action != None:
                 action_on_road.append(AM(action,delta_t, delay_a))
             state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
+            #state, reward = env.send_observation_no_delay(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
             if state is None:
                 log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
                 continue
@@ -139,9 +140,10 @@ if __name__ == '__main__':
                 log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')
                 log.logger.debug('[ENV][newly reward: %f with action %d]' % (reward.value, env.action_seq[-1]))
             log.logger.debug('[System][time point: %d end]\n' % (delta_t))
-        logR.logger.debug('Epision Reward %f' % (agent.reward_sum))
+        logR.logger.debug('Epision[%d] DReward %f' % (ep, agent.reward_sum))
         logR.logger.debug('Episode discard rate: (%d / %d = %f)' % (env.model.n_discard_msgs, env.model.n_request_msgs, env.model.n_discard_msgs/env.model.n_request_msgs))
         agent.epison_reward.append(agent.reward_sum)
+        logR.logger.debug('action sequences \n%s' % (str(env.action_seq)))
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)

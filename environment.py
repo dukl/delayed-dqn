@@ -26,6 +26,7 @@ class ENV(object):
 
 
     def reset(self):
+        self.action_seq.clear()
         del self.model
         self.model = FM(0, iscopy=False)
     def step(self, action):
@@ -64,11 +65,18 @@ class ENV(object):
         running_time = acts[-1].current_status
         delta_x = 0
         if acts[-1].value == 1:
-            capacity = n_total_msgs / (n_amf_inst + 1)
-            capacity -= 20 * (1 - running_time)
-            if capacity < 0:
-                capacity = 0
-            delta_x = (0.90 - capacity/AMF_CAPACITY)/0.9 - (n_amf_inst + 1)/20 # only support maximum 20 AMFs
+            if n_amf_inst == 10:
+                capacity = n_total_msgs / (n_amf_inst)
+                capacity -= 20 * (1 - running_time)
+                if capacity < 0:
+                    capacity = 0
+                delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst + 1) / 20 - 1 # only support maximum 20 AMFs
+            elif n_amf_inst < 10:
+                capacity = n_total_msgs / (n_amf_inst + 1)
+                capacity -= 20 * (1 - running_time)
+                if capacity < 0:
+                    capacity = 0
+                delta_x = (0.90 - capacity/AMF_CAPACITY)/0.9 - (n_amf_inst + 1)/20 # only support maximum 20 AMFs
         if acts[-1].value == 0:
             capacity = n_total_msgs / (n_amf_inst)
             capacity -= 20 * (1 - running_time)
@@ -81,7 +89,7 @@ class ENV(object):
                 capacity -= 20 * (1 - running_time)
                 if capacity < 0:
                     capacity = 0
-                delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20  # only support maximum 20 AMFs
+                delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst) / 20 - 1 # only support maximum 20 AMFs
             elif n_amf_inst > 1:
                 capacity = n_total_msgs / (n_amf_inst - 1)
                 capacity -= 20 * (1 - running_time)
@@ -89,7 +97,7 @@ class ENV(object):
                     capacity = 0
                 delta_x = (0.90 - capacity / AMF_CAPACITY) / 0.9 - (n_amf_inst - 1) / 20  # only support maximum 20 AMFs
         rwdV = 0
-        delta_x += 0.5 # 10 / 20
+        delta_x += 1 # 10 / 20
         log.logger.debug('[REWARD][%d, %d, %d, %f, %f, %f]' % (acts[-1].value, n_total_msgs, n_amf_inst, 1- running_time, capacity, delta_x))
         log.logger.debug('[REWARD][return reward: %f]' % (delta_x + reward_bais))
         #if delta_x >= 0:
@@ -97,6 +105,7 @@ class ENV(object):
         #else:
         #    rwdV = -math.exp(-delta_x)
         rwdV = delta_x + reward_bais
+        rwdV = (rwdV - (-2)) / (3 - (-2))
 
 
         reward = RM(id, rwdV, acts[-1].id, id)
@@ -107,6 +116,7 @@ class ENV(object):
         if delta_t == 0:
             return self.get_obs_rewards(n_input_msgs, None, reward_bias, delta_t)
         if len(acts) > 0:
+            self.action_seq.append(acts[0].value)
             obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
             log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[0].id, acts[0].value))
             reward_bias += self.model.step(acts[0].value, acts[0].id, 0, 1, delta_t)
@@ -151,8 +161,6 @@ class ENV(object):
             log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[-1].id, acts[-1].value, reward_bais))
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
             reward.value += reward_bais
-
-            reward.value = (reward.value - (-1)) / (1.5 - (-1))
 
             return obs, reward
         else:

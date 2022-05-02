@@ -109,13 +109,13 @@ class FM(object):
             self.amf_id += 1
             if self.numAMF >= self.MAX_AMF_INST:
                 log.logger.debug('Maximum Number of AMF Instance is %d, ignore this action' % (self.MAX_AMF_INST))
-                reward_bias -= 1
+                #reward_bias -= 1
             else:
                 self.numAMF += 1
                 self.amfList.append(AmfEntity(np.random.uniform(2, 4, None), self.amf_id - 1, delta_t))
         if action == -1:
             if len(self.amfList) == 1:
-                reward_bias -= 1
+                #reward_bias -= 1
                 log.logger.debug('Number of AMF instance is less than 1, so missed this action, return reward -100')
             else:
                 self.check_close_which_AMF_Inst()
