@@ -106,7 +106,7 @@ if __name__ == '__main__':
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
     learn_index = 0
-    for ep in range(2000):
+    for ep in range(1000):
         log.logger.debug('[System][Episode][%d]' % (ep+1))
         env.reset()
         agent.reset()
@@ -123,8 +123,8 @@ if __name__ == '__main__':
             action, delay_a = agent.receive_observation(check_state(), delta_t)
             if action != None:
                 action_on_road.append(AM(action,delta_t, delay_a))
-            state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
-            #state, reward = env.send_observation_no_delay(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
+            #state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
+            state, reward = env.send_observation_no_delay(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
             if state is None:
                 log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
                 continue

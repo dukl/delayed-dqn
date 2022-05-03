@@ -77,16 +77,18 @@ class Agent:
             observation = np.array(obs[0].value).reshape(1,25)[0]
             log.logger.debug('[reshape obs before: %s]' % str(observation))
             observation[observation==0] = 0.01
-            log.logger.debug('[reshape obs after : %s]' % str(observation))
+            _range = np.max(observation) - np.min(observation)
+            norm_obs = (observation - np.min(observation))/_range
+            log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             if self.pending_action is not None:
-                log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(observation)))
-                self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, observation)
-                if (self.model.memory_counter >= 600) and (self.model.memory_counter % 100 == 0):
+                log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
+                self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs)
+                if (self.model.memory_counter >= 100) and (self.model.memory_counter % 100 == 0):
                     logR.logger.debug('Training ...')
                     log.logger.debug('Training  ...')
                     self.model.learn()
-            self.pending_state = observation
+            self.pending_state = norm_obs
             action = self.model.choose_action(self.pending_state)
             self.pending_action = action
             logR.logger.debug('Agent generates action (%d, %d)' % (action, self.action_space[action]))

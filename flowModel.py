@@ -132,14 +132,18 @@ class FM(object):
         self.isDeleted = False
 
         while self.it_time < (tpE + delta_t - 1):
-            if self.it_time < delta_t - 1 and self.add_input_msgs[0] is False and self.isDeleted is False and action is None:
+            if self.it_time < delta_t - 1 and self.add_input_msgs[0] is False and self.isDeleted is False: # no delay
+            #if self.it_time < delta_t - 1 and self.add_input_msgs[0] is False and self.isDeleted is False and action is None:
+
                 self.add_input_msgs[0] = True
                 log.logger.debug('[FlowModel][Adding new messages --- 0]')
                 for i in range(self.inputMsgs[0]):
                     message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
                     self.msgInRISE.append(message)
                 self.total_ue_reqs += self.inputMsgs[0]
-            if self.it_time >= delta_t - 1 and self.it_time < tpE + delta_t -1 and self.add_input_msgs[1] is False and self.isDeleted is False and action is None:
+            if self.it_time >= delta_t - 1 and self.it_time < tpE + delta_t -1 and self.add_input_msgs[1] is False and self.isDeleted is False: # no delay
+            #if self.it_time >= delta_t - 1 and self.it_time < tpE + delta_t - 1 and self.add_input_msgs[1] is False and self.isDeleted is False and action is None:
+
                 self.add_input_msgs[1] = True
                 log.logger.debug('[FlowModel][Adding new messages --- 1]')
                 for i in range(self.inputMsgs[1]):
