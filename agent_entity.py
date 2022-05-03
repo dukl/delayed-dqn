@@ -18,7 +18,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.0001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=200, memory_size=100000, batch_size=500
+            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=200, memory_size=100000, batch_size=32
         )
         self.step = 0
         self.pending_state = None
@@ -76,9 +76,10 @@ class Agent:
                 obs[0].value = obsV
             observation = np.array(obs[0].value).reshape(1,25)[0]
             log.logger.debug('[reshape obs before: %s]' % str(observation))
-            observation[observation==0] = 0.01
+            #observation[observation==0] = 0.01
             _range = np.max(observation) - np.min(observation)
             norm_obs = (observation - np.min(observation))/_range
+            norm_obs[norm_obs==0] = 0.001
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             if self.pending_action is not None:

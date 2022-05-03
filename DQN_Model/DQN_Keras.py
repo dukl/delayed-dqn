@@ -18,7 +18,7 @@ class DQN:
             learning_rate=0.01,
             reward_decay=0.9,
             e_greedy=0.9,
-            replace_target_iter=300,
+            replace_target_iter=10,
             memory_size=500,
             batch_size=32,
             e_greedy_increment=None,
@@ -107,7 +107,7 @@ class DQN:
         eval_act_index = batch_memory[:, self.n_features].astype(int)
         reward = batch_memory[:, self.n_features + 1]
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
-        self.model2.fit(batch_memory[:, :self.n_features], q_target, epochs=2, batch_size=128, shuffle=True)
+        self.model2.fit(batch_memory[:, :self.n_features], q_target, epochs=10)
         self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
         self.learn_step_counter += 1
         #self.model1.save_weights('target_DQN_weights.h5')

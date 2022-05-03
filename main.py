@@ -13,7 +13,7 @@ from entities import AmfEntity
 
 
 delta_t = -1 # time step
-NUM_UE_REQs = 60
+NUM_UE_REQs = 20
 MAX_TIME = 200
 
 state_on_road = []
