@@ -18,7 +18,7 @@ class Agent:
         self.history_acts = []
         self.history_rwds = []
         self.model = DQN(
-            3, 25, learning_rate=0.01, reward_decay=0.9, e_greedy=0.9, replace_target_iter=200, memory_size=100000, batch_size=32
+            3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
         )
         self.step = 0
         self.pending_state = None
@@ -79,13 +79,13 @@ class Agent:
             #observation[observation==0] = 0.01
             _range = np.max(observation) - np.min(observation)
             norm_obs = (observation - np.min(observation))/_range
-            norm_obs[norm_obs==0] = 0.001
+            norm_obs[norm_obs==0] = 0.0001
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             if self.pending_action is not None:
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
                 self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs)
-                if (self.model.memory_counter >= 100) and (self.model.memory_counter % 100 == 0):
+                if (self.model.memory_counter >= 1300) and (self.model.memory_counter % 100 == 0):
                     logR.logger.debug('Training ...')
                     log.logger.debug('Training  ...')
                     self.model.learn()

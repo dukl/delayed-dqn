@@ -105,7 +105,7 @@ class ENV(object):
         #else:
         #    rwdV = -math.exp(-delta_x)
         rwdV = delta_x + reward_bais
-        rwdV = (rwdV - (-2)) / (3 - (-2))
+        rwdV = (rwdV - (-0.5)) / (1.95 - (-0.5))
 
 
         reward = RM(id, rwdV, acts[-1].id, id)

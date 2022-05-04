@@ -148,8 +148,8 @@ if __name__ == '__main__':
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
     plt.plot(agent.epison_reward)
-    plt.savefig('reward_gt_pred.png')
-    plt.show()
+    plt.savefig('rewards-0504-nd.png')
+    #plt.show()
 
 
 
