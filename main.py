@@ -81,6 +81,8 @@ def envCopy(env):
         copied_env.model.msgInRISE.append(copy.deepcopy(env.model.msgInRISE[i]))
     for i in range(len(env.model.inputMsgs)):
         copied_env.model.inputMsgs.append(env.model.inputMsgs[i])
+    for i in range(len(env.model.flag)):
+        copied_env.model.flag.append(env.model.flag[i])
     copied_env.model.AMFIndex = env.model.AMFIndex
     for i in range(len(env.model.amfList)):
         copied_env.model.amfList.append(AmfEntity(env.model.amfList[i].n_cpu_cores, env.model.amfList[i].id, env.model.amfList[i].tp))
@@ -97,6 +99,7 @@ def envCopy(env):
     copied_env.model.usefulUpRoad = env.model.usefulUpRoad
     copied_env.model.amf_id = env.model.amf_id
     log.logger.debug('[DeepCopied ENV][msgInRISE][%d][amflist: %d]' % (len(copied_env.model.msgInRISE), len(copied_env.model.amfList)))
+
     return copied_env
 
 
@@ -134,6 +137,9 @@ if __name__ == '__main__':
             state_on_road[-1].env = envCopy(env)
             state_on_road[-1].inputMsgs = 0
             state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 1])
+            state_on_road[-1].env.model.flag.append(False)
+            log.logger.debug('env input msgs (%d)/ flag (%d)' % (len(env.model.inputMsgs), len(env.model.flag)))
+            log.logger.debug('envGT input msgs (%d)/ flag (%d)' % (len(state_on_road[-1].env.model.inputMsgs), len(state_on_road[-1].env.model.flag)))
 
             if reward.value == None:
                 log.logger.debug('[ENV][newly obs: '+''.join(str(state))+']')

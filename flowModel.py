@@ -38,7 +38,7 @@ class FM(object):
         self.n_discard_msgs = 0
         self.n_request_msgs = 0
         self.old_delta_t = 0
-        self.isWithDelay = False
+        self.isWithDelay = True
 
     def __deepcopy__(self, memodict={}):
         cpyobj = type(self)(0)

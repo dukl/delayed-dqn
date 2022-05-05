@@ -137,10 +137,14 @@ class ENV(object):
             self.action_seq.append(acts[0].value)
             reward_bias += self.model.step(None, None, acts[0].old_obs_id, acts[0].id + acts[0].current_status, delta_t)
             obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
+            obs_[0] = len(self.model.msgInRISE)
+            log.logger.debug('Real Obs: %s' % (str(obs_)))
             reward_bias += self.model.step(acts[0].value, acts[0].id, acts[0].id + acts[0].current_status, delta_t, delta_t)
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
-            self.model.inputMsgs.clear()
-            self.model.flag.clear()
+            del self.model.inputMsgs[0]
+            del self.model.inputMsgs[1]
+            del self.model.flag[0]
+            del self.model.flag[1]
             return obs, reward
         else:
             return None,None
