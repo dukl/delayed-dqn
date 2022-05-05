@@ -26,7 +26,7 @@ class Agent:
         self.epison_reward = []
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = True
+        self.isPredGT = False
         self.isPredDNN = False
     def reset(self):
         self.step = 0
@@ -34,7 +34,7 @@ class Agent:
         self.pending_action = None
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = True
+        self.isPredGT = False
         self.isPredDNN = False
 
     def receive_observation(self, obs, delta_t):
@@ -72,12 +72,17 @@ class Agent:
                 log.logger.debug(
                     '------------------------------------------------- GT End--------------------------------------')
             elif self.isPredDNN is True:
+                log.logger.debug(
+                    '------------------------------------------------- DNN Start--------------------------------------')
                 model = DNN.dnn.DNNModel(25,25)
                 model = keras.models.load_model('DNN/saved_model', compile=False)
                 model.load_weights('DNN/my_model_weights.h5', by_name=True)
-                model.compile(loss='mean_squared_error', optimizer=optimizers.Adam(0.0001))
-                obsV = model.predict(np.array(obs[0].value).reshape(1,25)[0])
-                obs[0].value = obsV
+                #model.compile(loss='mean_squared_error', optimizer=optimizers.Adam(0.0001))
+                obsV = model.predict(np.array(obs[0].value).reshape(25,1))
+                log.logger.debug('[ENV][GT][Predicted State] %s' % str(obsV))
+                obs[0].value = obsV[0]
+                log.logger.debug(
+                    '------------------------------------------------- DNN End--------------------------------------')
             observation = np.array(obs[0].value).reshape(1,25)[0]
             log.logger.debug('[reshape obs before: %s]' % str(observation))
             #observation[observation==0] = 0.01

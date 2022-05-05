@@ -14,7 +14,7 @@ from entities import AmfEntity
 
 delta_t = -1 # time step
 NUM_UE_REQs = 20
-MAX_TIME = 200
+MAX_TIME = 40
 
 state_on_road = []
 action_on_road = []
@@ -109,7 +109,9 @@ if __name__ == '__main__':
     log.logger.debug('[System][initial the Environment]')
     log.logger.debug('[System][initial the Agent]')
     learn_index = 0
-    for ep in range(1000):
+    load = []
+    for ep in range(1):
+        load.clear()
         log.logger.debug('[System][Episode][%d]' % (ep+1))
         env.reset()
         agent.reset()
@@ -120,6 +122,10 @@ if __name__ == '__main__':
         state_on_road.clear()
         action_on_road.clear()
         while delta_t<MAX_TIME:
+            loadV = UeReqs[delta_t]+len(env.model.msgInRISE)+env.model.usefulUpRoad+len(env.model.msgDnOnRoad)
+            for i in range(len(env.model.amfList)):
+                loadV += env.model.amfList[i].n_msgs
+            load.append(loadV)
             delta_t += 1
             env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
             log.logger.debug('[System][time point: %d] begin, adding new %d UE Requests' % (delta_t, UeReqs[delta_t]))
@@ -155,8 +161,27 @@ if __name__ == '__main__':
         #if (delta_t + 1) % 30 == 0:
             #save_plot(delta_t, env.model.amfList)
     #save_plot(NUM_UE_REQs, env.model.amfList)
-    plt.plot(agent.epison_reward)
-    plt.savefig('rewards-0504-nd.png')
+    acts = []
+    acts.append(1)
+    acts.append(1)
+    for i in range(len(env.action_seq)):
+        tmp = acts[-1] + env.action_seq[i]
+        if tmp == 0 or tmp > 10:
+            acts.append(acts[-1])
+            acts.append(acts[-1])
+        else:
+            acts.append(tmp)
+            acts.append(tmp)
+
+    fig, ax = plt.subplots()
+    ax.plot(load, color='green')
+    ax2 = ax.twinx()
+    x = [j for j in range(len(acts))]
+    ax2.step(x, acts, color='blue')
+    plt.savefig('acts-load.png')
+    #plt.show()
+    #plt.plot(agent.epison_reward)
+    #plt.savefig('rewards-0504-nd.png')
     #plt.show()
 
 
