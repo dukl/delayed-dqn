@@ -34,9 +34,11 @@ class FM(object):
         self.usefulUpRoad = 0
         self.amf_id = 1
         self.inputMsgs = []
+        self.flag = []
         self.n_discard_msgs = 0
         self.n_request_msgs = 0
-
+        self.old_delta_t = 0
+        self.isWithDelay = False
 
     def __deepcopy__(self, memodict={}):
         cpyobj = type(self)(0)
@@ -45,6 +47,7 @@ class FM(object):
 
     def update_ue_reqs_every_time_step(self, n_ue_reqs):
         self.inputMsgs.append(n_ue_reqs)
+        self.flag.append(False)
         #for i in range(n_ue_reqs):
         #    message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
         #    self.msgInRISE.append(message)
@@ -122,41 +125,34 @@ class FM(object):
         return reward_bias
 
     def step(self, action, id, tpS, tpE, delta_t):
-        log.logger.debug('[ENV][step] [%f ~ %f]' % (self.it_time, tpE + delta_t - 1))
+        self.old_delta_t = delta_t
+        log.logger.debug('[ENV][step] [%f ~ %f]' % (tpS, tpE))
         reward = 0
         if action == None:
             log.logger.debug('[FlowModel][No action is executed]')
-
         self.add_new_action = False
         self.add_input_msgs = [False, False]
         self.isDeleted = False
+        self.it_time = tpS
+        while self.it_time < tpE: # no delay
+            if self.isWithDelay is False:
+                n_input_msg = len(self.inputMsgs)-1
+                for n in range(n_input_msg):
+                    for i in range(self.inputMsgs[n_input_msg-n-1]):
+                        message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
+                        self.msgInRISE.append(message)
+                    self.total_ue_reqs += self.inputMsgs[n_input_msg-n-1]
+                    del self.inputMsgs[n_input_msg-n-1]
+            if self.isWithDelay is True:
+                if self.flag[int(self.it_time-tpS)] is False:
+                    log.logger.debug('[FlowModel][Adding new messages --- %d]' % (self.inputMsgs[int(self.it_time-tpS)]))
+                    for i in range(self.inputMsgs[int(self.it_time-tpS)]):
+                        message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
+                        self.msgInRISE.append(message)
+                    self.total_ue_reqs += self.inputMsgs[int(self.it_time-tpS)]
+                    self.flag[int(self.it_time-tpS)] = True
 
-        while self.it_time < (tpE + delta_t - 1):
-            if self.it_time < delta_t - 1 and self.add_input_msgs[0] is False and self.isDeleted is False: # no delay
-            #if self.it_time < delta_t - 1 and self.add_input_msgs[0] is False and self.isDeleted is False and action is None:
-
-                self.add_input_msgs[0] = True
-                log.logger.debug('[FlowModel][Adding new messages --- 0]')
-                for i in range(self.inputMsgs[0]):
-                    message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
-                    self.msgInRISE.append(message)
-                self.total_ue_reqs += self.inputMsgs[0]
-            if self.it_time >= delta_t - 1 and self.it_time < tpE + delta_t -1 and self.add_input_msgs[1] is False and self.isDeleted is False: # no delay
-            #if self.it_time >= delta_t - 1 and self.it_time < tpE + delta_t - 1 and self.add_input_msgs[1] is False and self.isDeleted is False and action is None:
-
-                self.add_input_msgs[1] = True
-                log.logger.debug('[FlowModel][Adding new messages --- 1]')
-                for i in range(self.inputMsgs[1]):
-                    message = Msgs(self.total_ue_reqs + i + 1, 1, 'RegistrationRequest')
-                    self.msgInRISE.append(message)
-                self.total_ue_reqs += self.inputMsgs[1]
-            if self.add_input_msgs[0] and self.add_input_msgs[1]:
-                log.logger.debug('[FlowModel][deleting old messages]')
-                del self.inputMsgs[1]
-                del self.inputMsgs[0]
-                self.add_input_msgs = [False, False]
-                self.isDeleted = True
-            if action != None and self.it_time >= tpS + delta_t - 1 and self.add_new_action == False:
+            if action != None and self.add_new_action == False:
                 self.add_new_action = True
                 reward = self.action_execution(action, delta_t)
             self.it_time += self.time_interval

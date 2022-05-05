@@ -3,9 +3,10 @@ import numpy as np
 import math
 
 class AM:
-    def __init__(self, action, id, delay):
+    def __init__(self, action, id, delay, old_obs_id):
         self.value = action
         self.id = id
+        self.old_obs_id = old_obs_id
         self.time_step = 0
         self.current_status = delay
         self.time_left_in_env = 0

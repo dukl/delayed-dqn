@@ -16,6 +16,7 @@ class ENV(object):
         self.model = FM(0, iscopy)
         self.deep_cp_attr = None
         self.action_seq = []
+        self.oldInputMsg = 0
         if other is not None:
             self.__dict__ = copy.deepcopy(other.__dict__)
 
@@ -35,7 +36,7 @@ class ENV(object):
         log.logger.debug('[ENV][get_obs_rewards]')
         #self.model.amfList.sort(key=lambda AmfEntity: AmfEntity.id, reverse=False)
         obs = [n_input_msgs+len(self.model.msgInRISE), self.model.usefulUpRoad, len(self.model.msgDnOnRoad), self.model.Delay_Up_Link, self.model.Delay_Up_Link]
-        n_total_msgs = 0
+        n_total_msgs = self.oldInputMsg
         n_amf_inst = 0
         cpus, msgs = [], []
         for i in range(self.model.MAX_AMF_INST):
@@ -59,6 +60,7 @@ class ENV(object):
         #    else:
         #        obs += [0,0]
         if acts == None:
+            self.oldInputMsg = n_input_msgs
             reward = RM(id, None, None, id)
             return obs, reward
         n_total_msgs += len(self.model.msgInRISE) + self.model.usefulUpRoad + len(self.model.msgDnOnRoad)
@@ -99,7 +101,7 @@ class ENV(object):
         rwdV = 0
         delta_x += 1 # 10 / 20
         log.logger.debug('[REWARD][%d, %d, %d, %f, %f, %f]' % (acts[-1].value, n_total_msgs, n_amf_inst, 1- running_time, capacity, delta_x))
-        log.logger.debug('[REWARD][return reward: %f]' % (delta_x + reward_bais))
+
         #if delta_x >= 0:
         #    rwdV = 1/(delta_x + 0.001)
         #else:
@@ -107,7 +109,7 @@ class ENV(object):
         rwdV = delta_x + reward_bais
         rwdV = (rwdV - (-0.5)) / (1.95 - (-0.5))
 
-
+        log.logger.debug('[REWARD][return reward: %f]' % (rwdV))
         reward = RM(id, rwdV, acts[-1].id, id)
         return obs, reward
 
@@ -119,55 +121,30 @@ class ENV(object):
             self.action_seq.append(acts[0].value)
             obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
             log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[0].id, acts[0].value))
-            reward_bias += self.model.step(acts[0].value, acts[0].id, 0, 1, delta_t)
+            reward_bias += self.model.step(acts[0].value, acts[0].id, acts[0].id + acts[0].current_status, delta_t, delta_t)
             log.logger.debug('[ENV][action %d] = %d is executed' % (acts[0].id, acts[0].value))
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
             reward.value += reward_bias
             return obs, reward
         else:
             return None,None
+
     def send_observation(self, acts, delta_t, n_input_msgs):
-        log.logger.debug('[ENV][send_observation]')
-        reward_bais = 0
+        reward_bias = 0
         if delta_t == 0:
-            return self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
-        tp = [0]
+            return self.get_obs_rewards(n_input_msgs, None, reward_bias, delta_t)
         if len(acts) > 0:
             self.action_seq.append(acts[0].value)
-            #if len(acts) == 1:
-            #    reward_bais += self.model.step(None, None, 0, 1, delta_t)
-            #    obs, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bais)
-            #    reward_bais += self.model.step(acts[0].value, None, 0, 1, delta_t)
-            acts.sort(key=lambda AM: AM.time_left_in_env, reverse=False)
-            for i in range(len(acts)):
-                log.logger.debug('[ENV][receive a[%d]=%d (time in advance : %f)]' % (acts[i].id, acts[i].value, acts[i].time_left_in_env))
-                tp.append(acts[i].time_left_in_env)
-            #tp.append(1)
-            index = 0
-            for i in range(len(acts)):
-                if i == 0:
-                    reward_bais += self.model.step(None, None, tp[index], tp[index + 1], delta_t)
-                    continue
-                else:
-                    log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[index].id, acts[index].value))
-                    reward_bais += self.model.step(acts[index].value, acts[index].id, tp[index], tp[index+1], delta_t)
-                    log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[index].id, acts[index].value, reward_bais))
-                index += 1
-            obs_, reward = self.get_obs_rewards(0, acts, reward_bais, delta_t)
-            log.logger.debug('[ENV][Get Current States]\n %s' % (str(obs_)))
-            #self.model.check_delete_AMF_inst()
-            log.logger.debug('[ENV][action %d] = %d is being executed' % (acts[-1].id, acts[-1].value))
-            reward_bais += self.model.step(acts[-1].value, acts[-1].id, acts[-1].time_left_in_env, 1, delta_t)
-            log.logger.debug('[ENV][action %d] = %d is executed with bias %d' % (acts[-1].id, acts[-1].value, reward_bais))
-            obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bais, delta_t)
-            reward.value += reward_bais
-
+            reward_bias += self.model.step(None, None, acts[0].old_obs_id, acts[0].id + acts[0].current_status, delta_t)
+            obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
+            reward_bias += self.model.step(acts[0].value, acts[0].id, acts[0].id + acts[0].current_status, delta_t, delta_t)
+            obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
+            self.model.inputMsgs.clear()
+            self.model.flag.clear()
             return obs, reward
         else:
-            log.logger.debug('[ENV][does not receive any actions at this time point]')
-            #reward_bais += self.model.step(None, None, 0, 1, delta_t)
-            #obs, reward = self.get_obs_rewards(n_input_msgs, None, reward_bais, delta_t)
-            #self.model.check_delete_AMF_inst()
-            return None, None
+            return None,None
+
+
 
 

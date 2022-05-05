@@ -93,7 +93,7 @@ class Agent:
             action = self.model.choose_action(self.pending_state)
             self.pending_action = action
             logR.logger.debug('Agent generates action (%d, %d)' % (action, self.action_space[action]))
-            return self.action_space[action], delay
+            return self.action_space[action], delay, obs[0].id
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
-            return None, None
+            return None, None, None

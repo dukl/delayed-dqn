@@ -120,11 +120,13 @@ if __name__ == '__main__':
             delta_t += 1
             env.model.update_ue_reqs_every_time_step(UeReqs[delta_t])
             log.logger.debug('[System][time point: %d] begin, adding new %d UE Requests' % (delta_t, UeReqs[delta_t]))
-            action, delay_a = agent.receive_observation(check_state(), delta_t)
+            action, delay_a, old_obs_id = agent.receive_observation(check_state(), delta_t)
             if action != None:
-                action_on_road.append(AM(action,delta_t, delay_a))
-            #state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
-            state, reward = env.send_observation_no_delay(check_action(delta_t), delta_t, UeReqs[delta_t + 2])
+                action_on_road.append(AM(action,delta_t, delay_a, old_obs_id))
+            if env.model.isWithDelay is True:
+                state, reward = env.send_observation(check_action(delta_t), delta_t, UeReqs[delta_t])
+            else:
+                state, reward = env.send_observation_no_delay(check_action(delta_t), delta_t, UeReqs[delta_t])
             if state is None:
                 log.logger.debug('[ENV][---- Not received action, donnot collect state ----]\n')
                 continue
