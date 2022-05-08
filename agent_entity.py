@@ -26,7 +26,7 @@ class Agent:
         self.epison_reward = []
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = False
+        self.isPredGT = True
         self.isPredDNN = False
     def reset(self):
         self.step = 0
@@ -34,7 +34,7 @@ class Agent:
         self.pending_action = None
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = False
+        self.isPredGT = True
         self.isPredDNN = False
 
     def receive_observation(self, obs, delta_t):
@@ -56,7 +56,7 @@ class Agent:
             #    log.logger.debug('[DQN][Training]')
             #    self.model.learn()
 
-            delay = np.random.uniform(0,1,None)
+            delay = np.random.uniform(1,2,None)
             if self.isPredGT is True:
                 log.logger.debug('[ENV][GT][changing over time]')
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))

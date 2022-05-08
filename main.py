@@ -143,6 +143,10 @@ if __name__ == '__main__':
             state_on_road[-1].env = envCopy(env)
             state_on_road[-1].inputMsgs = 0
             state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 1])
+            state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 2])
+            state_on_road[-1].env.model.inputMsgs.append(UeReqs[delta_t + 3])
+            state_on_road[-1].env.model.flag.append(False)
+            state_on_road[-1].env.model.flag.append(False)
             state_on_road[-1].env.model.flag.append(False)
             log.logger.debug('env input msgs (%d)/ flag (%d)' % (len(env.model.inputMsgs), len(env.model.flag)))
             log.logger.debug('envGT input msgs (%d)/ flag (%d)' % (len(state_on_road[-1].env.model.inputMsgs), len(state_on_road[-1].env.model.flag)))

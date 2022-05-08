@@ -141,10 +141,11 @@ class ENV(object):
             log.logger.debug('Real Obs: %s' % (str(obs_)))
             reward_bias += self.model.step(acts[0].value, acts[0].id, acts[0].id + acts[0].current_status, delta_t, delta_t)
             obs, reward_ = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
-            del self.model.inputMsgs[0]
-            del self.model.inputMsgs[1]
-            del self.model.flag[0]
-            del self.model.flag[1]
+            n = len(self.model.inputMsgs)
+            log.logger.debug('DUKL: %d' % (n))
+            for i in range(n-1):
+                del self.model.inputMsgs[0]
+                del self.model.flag[0]
             return obs, reward
         else:
             return None,None
