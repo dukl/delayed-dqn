@@ -8,7 +8,7 @@ from logger import log
 class SM:
     def __init__(self, state, id, reward):
         self.value = state
-        self.trans_delay = np.random.uniform(1,2,None)
+        self.trans_delay = np.random.uniform(0,1,None)
         self.current_status = self.trans_delay
         self.id = id
         self.time_step = 0

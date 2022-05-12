@@ -61,7 +61,7 @@ class ENV(object):
         #        obs += [0,0]
         if acts == None:
             self.oldInputMsg = n_input_msgs
-            reward = RM(id, None, None, id)
+            reward = RM(id, 0, 0, id)
             return obs, reward
         n_total_msgs += len(self.model.msgInRISE) + self.model.usefulUpRoad + len(self.model.msgDnOnRoad)
         running_time = acts[-1].current_status
@@ -135,7 +135,7 @@ class ENV(object):
             return self.get_obs_rewards(n_input_msgs, None, reward_bias, delta_t)
         if len(acts) > 0:
             self.action_seq.append(acts[0].value)
-            reward_bias += self.model.step(None, None, acts[0].old_obs_id, acts[0].id + acts[0].current_status, delta_t)
+            reward_bias += self.model.step(None, None, acts[0].id, acts[0].id + acts[0].current_status, delta_t)
             obs_, reward = self.get_obs_rewards(n_input_msgs, acts, reward_bias, delta_t)
             obs_[0] = len(self.model.msgInRISE)
             log.logger.debug('Real Obs: %s' % (str(obs_)))
@@ -148,7 +148,7 @@ class ENV(object):
                 del self.model.flag[0]
             return obs, reward
         else:
-            return None,None
+            return self.get_obs_rewards(n_input_msgs, None, reward_bias, delta_t)
 
 
 

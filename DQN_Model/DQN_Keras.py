@@ -36,6 +36,7 @@ class DQN:
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
 
         self.learn_step_counter = 0
+        self.memory_counter = 0
 
         self.memory = np.zeros((self.memory_size, n_features * 2 + 2))
 

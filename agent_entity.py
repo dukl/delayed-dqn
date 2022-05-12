@@ -9,7 +9,7 @@ from logger import log, logR
 from DQN_Model.DQN_Keras import DQN
 from copy import deepcopy
 from environment import ENV
-
+from DQN_Model.dqn_agents import DDQNPlanningAgent
 
 class Agent:
     def __init__(self):
@@ -17,25 +17,31 @@ class Agent:
         self.history_obs = []
         self.history_acts = []
         self.history_rwds = []
-        self.model = DQN(
-            3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
-        )
+        #self.model = DQN(
+        #    3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
+        #)
+        self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
         self.step = 0
         self.pending_state = None
         self.pending_action = None
         self.epison_reward = []
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = True
+        self.isPredGT = False
         self.isPredDNN = False
+        self.act_buf = []
+        self.step_num = 0
+
     def reset(self):
+        self.step_num = 0
         self.step = 0
         self.pending_state = None
         self.pending_action = None
         self.index = 0
         self.reward_sum = 0
-        self.isPredGT = True
+        self.isPredGT = False
         self.isPredDNN = False
+        self.act_buf.clear()
 
     def receive_observation(self, obs, delta_t):
         if len(obs) > 0:
@@ -56,7 +62,7 @@ class Agent:
             #    log.logger.debug('[DQN][Training]')
             #    self.model.learn()
 
-            delay = np.random.uniform(1,2,None)
+            delay = np.random.uniform(0,1,None)
             if self.isPredGT is True:
                 log.logger.debug('[ENV][GT][changing over time]')
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
@@ -93,16 +99,24 @@ class Agent:
 
             if self.pending_action is not None:
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
-                self.model.store_transition(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs)
-                if (self.model.memory_counter >= 1300) and (self.model.memory_counter % 100 == 0):
-                    logR.logger.debug('Training ...')
-                    log.logger.debug('Training  ...')
-                    self.model.learn()
+                self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs, False)
             self.pending_state = norm_obs
-            action = self.model.choose_action(self.pending_state)
+            action = self.model.act(self.pending_state, self.act_buf, eval=False)
+            del self.act_buf[0]
             self.pending_action = action
+            self.act_buf.append(self.pending_action)
             logR.logger.debug('Agent generates action (%d, %d)' % (action, self.action_space[action]))
+            self.step_num += 1
+            if self.step_num % 200 == 0:
+                self.model.update_target_model()
+            batch_size = 32
+            if len(self.model.memory) > batch_size and self.step_num % 2 == 0:
+                batch_loss_dict = self.model.replay(batch_size)
+
             return self.action_space[action], delay, obs[0].id
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
-            return None, None, None
+            self.pending_action = 0
+            self.act_buf.append(self.pending_action)
+            self.pending_state = [0]
+            return self.action_space[0], 0.5, 0
