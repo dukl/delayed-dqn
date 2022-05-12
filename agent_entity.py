@@ -21,7 +21,8 @@ class Agent:
         #    3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
         #)
         #self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
-        self.model = DDQNAgent(26, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
+        #self.model = DDQNAgent(26, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
+        self.model = DDQNAgent(25, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
         self.step = 0
         self.pending_state = None
         self.pending_action = None
@@ -100,19 +101,20 @@ class Agent:
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             if self.pending_action is not None:
-                if self.step_num == 0:
-                    self.pending_state = np.concatenate((self.pending_state, self.act_buf))
+                #if self.step_num == 0:
+                #    self.pending_state = np.concatenate((self.pending_state, self.act_buf))
                     #self.pending_state = np.reshape(self.pending_state, [1,26])
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
                 next_obs = norm_obs
-                next_obs = np.concatenate((norm_obs, self.act_buf))
+                #next_obs = np.concatenate((norm_obs, self.act_buf))
                 #next_obs = np.reshape(next_obs, [1,26])
-                log.logger.debug('-augumented stats: %s' % (str(next_obs)))
+                #log.logger.debug('-augumented stats: %s' % (str(next_obs)))
                 #self.pending_state = np.reshape(self.pending_state, [1,26])
                 #log.logger.debug('augumented stats: %s' % (str(self.pending_state)))
                 self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, next_obs, False)
             self.pending_state = next_obs
             #action = self.model.act(self.pending_state, self.act_buf, eval=False)
+            #action = self.model.act(self.pending_state, eval=False)
             action = self.model.act(self.pending_state, eval=False)
             del self.act_buf[0]
             self.pending_action = action
