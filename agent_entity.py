@@ -9,7 +9,7 @@ from logger import log, logR
 from DQN_Model.DQN_Keras import DQN
 from copy import deepcopy
 from environment import ENV
-from DQN_Model.dqn_agents import DDQNPlanningAgent
+from DQN_Model.dqn_agents import DDQNPlanningAgent, DDQNAgent
 
 class Agent:
     def __init__(self):
@@ -20,7 +20,8 @@ class Agent:
         #self.model = DQN(
         #    3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
         #)
-        self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
+        #self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
+        self.model = DDQNAgent(26, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
         self.step = 0
         self.pending_state = None
         self.pending_action = None
@@ -42,6 +43,7 @@ class Agent:
         self.isPredGT = False
         self.isPredDNN = False
         self.act_buf.clear()
+        self.model.clear_action_buffer()
 
     def receive_observation(self, obs, delta_t):
         if len(obs) > 0:
@@ -98,10 +100,20 @@ class Agent:
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             if self.pending_action is not None:
+                if self.step_num == 0:
+                    self.pending_state = np.concatenate((self.pending_state, self.act_buf))
+                    #self.pending_state = np.reshape(self.pending_state, [1,26])
                 log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
-                self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs, False)
-            self.pending_state = norm_obs
-            action = self.model.act(self.pending_state, self.act_buf, eval=False)
+                next_obs = norm_obs
+                next_obs = np.concatenate((norm_obs, self.act_buf))
+                #next_obs = np.reshape(next_obs, [1,26])
+                log.logger.debug('-augumented stats: %s' % (str(next_obs)))
+                #self.pending_state = np.reshape(self.pending_state, [1,26])
+                #log.logger.debug('augumented stats: %s' % (str(self.pending_state)))
+                self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, next_obs, False)
+            self.pending_state = next_obs
+            #action = self.model.act(self.pending_state, self.act_buf, eval=False)
+            action = self.model.act(self.pending_state, eval=False)
             del self.act_buf[0]
             self.pending_action = action
             self.act_buf.append(self.pending_action)
@@ -118,5 +130,5 @@ class Agent:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
             self.pending_action = 0
             self.act_buf.append(self.pending_action)
-            self.pending_state = [0]
+            self.pending_state = [0 for _ in range(25)]
             return self.action_space[0], 0.5, 0
