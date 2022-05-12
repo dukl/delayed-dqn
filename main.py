@@ -14,7 +14,7 @@ from entities import AmfEntity
 
 delta_t = -1 # time step
 NUM_UE_REQs = 20
-MAX_TIME = 40
+MAX_TIME = 1000
 
 state_on_road = []
 action_on_road = []
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     log.logger.debug('[System][initial the Agent]')
     learn_index = 0
     load = []
-    for ep in range(1):
+    for ep in range(1000):
         load.clear()
         log.logger.debug('[System][Episode][%d]' % (ep+1))
         env.reset()

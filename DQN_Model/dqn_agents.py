@@ -121,6 +121,7 @@ class DQNAgent:
             log.logger.debug('[DQN][Chose Action Randomly]')
             return random.randrange(self.action_size)
         log.logger.debug('[DQN][Chose Action With DQN Model]')
+        state = np.reshape(state, [1,26])
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns action
 
