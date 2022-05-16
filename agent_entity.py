@@ -65,7 +65,7 @@ class Agent:
             #    log.logger.debug('[DQN][Training]')
             #    self.model.learn()
 
-            delay = np.random.uniform(0,1,None)
+            delay = np.random.uniform(1,2,None)
             if self.isPredGT is True:
                 log.logger.debug('[ENV][GT][changing over time]')
                 log.logger.debug('[ENV][GT][Current State] %s' % str(obs[0].value))
@@ -133,4 +133,4 @@ class Agent:
             self.pending_action = 0
             self.act_buf.append(self.pending_action)
             self.pending_state = [0 for _ in range(25)]
-            return self.action_space[0], 0.5, 0
+            return self.action_space[0], 1.5, 0
