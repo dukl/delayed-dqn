@@ -121,7 +121,7 @@ class DQNAgent:
             log.logger.debug('[DQN][Chose Action Randomly]')
             return random.randrange(self.action_size)
         log.logger.debug('[DQN][Chose Action With DQN Model]')
-        state = np.reshape(state, [1,25])
+        state = np.reshape(state, [1,27])
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns action
 
@@ -279,7 +279,7 @@ class DDQNPlanningAgent(DDQNAgent):
         log.logger.debug('Memorize, delayed agent')
         new_tuple = (state, action, reward, next_state, done)
         self.sample_buffer.append(new_tuple)
-        if len(self.sample_buffer) - 1 >= self.delay_value:
+        if len(self.sample_buffer) -1 >= self.delay_value:
             old_tuple = self.sample_buffer.popleft()
             modified_tuple = list(deepcopy(old_tuple))
             # build time-coherent tuple from new tuple and old action

@@ -20,8 +20,8 @@ class Agent:
         #self.model = DQN(
         #    3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
         #)
-        #self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
-        self.model = DDQNAgent(27, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
+        self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
+        #self.model = DDQNAgent(27, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
         #self.model = DDQNAgent(25, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
         self.step = 0
         self.pending_state = None
@@ -104,23 +104,30 @@ class Agent:
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
             ########### ARGUMENT ############
+            #if self.pending_state is not None:
+            #    next_obs = np.concatenate((norm_obs, self.act_buf))
+            #    self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, next_obs, False)
+            #obs_for_act = np.concatenate((norm_obs, self.act_buf))
+            #self.pending_state = obs_for_act
+            #obs_for_act = np.reshape(obs_for_act, [1,27])
+            #action = self.model.act(obs_for_act, eval=False)
+            #self.pending_action = action
+            #del self.act_buf[0]
+            #self.act_buf.append(action)
+            ############# FM ######################
             if self.pending_state is not None:
-                next_obs = np.concatenate((norm_obs, self.act_buf))
-                self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, next_obs, False)
-
-            obs_for_act = np.concatenate((norm_obs, self.act_buf))
-            self.pending_state = obs_for_act
-            obs_for_act = np.reshape(obs_for_act, [1,27])
-            action = self.model.act(obs_for_act, eval=False)
-            self.pending_action = action
-
+                self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, norm_obs, False)
+            action = self.model.act(norm_obs, self.act_buf, eval=False)
+            self.pending_action = self.act_buf[0]
             del self.act_buf[0]
             self.act_buf.append(action)
+            self.pending_state = norm_obs
+
 
             self.step_num += 1
             if self.step_num % 200 == 0:
                 self.model.update_target_model()
-            batch_size = 2
+            batch_size = 32
             if len(self.model.memory) > batch_size and self.step_num % 2 == 0:
                 batch_loss_dict = self.model.replay(batch_size)
 
