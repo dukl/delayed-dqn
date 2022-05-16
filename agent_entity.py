@@ -21,10 +21,11 @@ class Agent:
         #    3, 25, learning_rate=0.001, reward_decay=0.9, e_greedy=0.9, replace_target_iter=20, memory_size=100000, batch_size=1280
         #)
         #self.model = DDQNPlanningAgent(25, 3, False, False, 1, 0.001, 0.999, 0.001, 1, False, True, None, True)
-        #self.model = DDQNAgent(26, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
-        self.model = DDQNAgent(25, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
+        self.model = DDQNAgent(27, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
+        #self.model = DDQNAgent(25, 3, False, False, 0, 0.001, 0.999, 0.001, 1, False, True)
         self.step = 0
         self.pending_state = None
+        self.pending_state_next = None
         self.pending_action = None
         self.epison_reward = []
         self.index = 0
@@ -32,6 +33,7 @@ class Agent:
         self.isPredGT = False
         self.isPredDNN = False
         self.act_buf = []
+        self.obs_buf = []
         self.step_num = 0
 
     def reset(self):
@@ -44,6 +46,7 @@ class Agent:
         self.isPredGT = False
         self.isPredDNN = False
         self.act_buf.clear()
+        self.obs_buf.clear()
         self.model.clear_action_buffer()
 
     def receive_observation(self, obs, delta_t):
@@ -100,37 +103,33 @@ class Agent:
             norm_obs[norm_obs==0] = 0.0001
             log.logger.debug('[reshape obs after : %s]' % str(norm_obs))
 
-            if self.pending_action is not None:
-                #if self.step_num == 0:
-                #    self.pending_state = np.concatenate((self.pending_state, self.act_buf))
-                    #self.pending_state = np.reshape(self.pending_state, [1,26])
-                log.logger.debug('Transition: \n%s,[%d,%f],%s' % (str(self.pending_state), self.pending_action, obs[0].reward.value, str(norm_obs)))
-                next_obs = norm_obs
-                #next_obs = np.concatenate((norm_obs, self.act_buf))
-                #next_obs = np.reshape(next_obs, [1,26])
-                #log.logger.debug('-augumented stats: %s' % (str(next_obs)))
-                #self.pending_state = np.reshape(self.pending_state, [1,26])
-                #log.logger.debug('augumented stats: %s' % (str(self.pending_state)))
+            ########### ARGUMENT ############
+            if self.pending_state is not None:
+                next_obs = np.concatenate((norm_obs, self.act_buf))
                 self.model.memorize(self.pending_state, self.pending_action, obs[0].reward.value, next_obs, False)
-            self.pending_state = next_obs
-            #action = self.model.act(self.pending_state, self.act_buf, eval=False)
-            #action = self.model.act(self.pending_state, eval=False)
-            action = self.model.act(self.pending_state, eval=False)
-            del self.act_buf[0]
+
+            obs_for_act = np.concatenate((norm_obs, self.act_buf))
+            self.pending_state = obs_for_act
+            obs_for_act = np.reshape(obs_for_act, [1,27])
+            action = self.model.act(obs_for_act, eval=False)
             self.pending_action = action
-            self.act_buf.append(self.pending_action)
-            logR.logger.debug('Agent generates action (%d, %d)' % (action, self.action_space[action]))
+
+            del self.act_buf[0]
+            self.act_buf.append(action)
+
             self.step_num += 1
             if self.step_num % 200 == 0:
                 self.model.update_target_model()
-            batch_size = 32
+            batch_size = 2
             if len(self.model.memory) > batch_size and self.step_num % 2 == 0:
                 batch_loss_dict = self.model.replay(batch_size)
 
             return self.action_space[action], delay, obs[0].id
         else:
             log.logger.debug('[Agent][does not receive any observation at this time point]')
-            self.pending_action = 0
-            self.act_buf.append(self.pending_action)
-            self.pending_state = [0 for _ in range(25)]
-            return self.action_space[0], 1.5, 0
+            #self.pending_action = 0
+            #self.pending_state = [0 for _ in range(25)]
+            self.act_buf.append(0)
+            tmp = [0 for _ in range(25)]
+            self.obs_buf.append(np.array(tmp))
+            return self.action_space[1], 1.5, 0
